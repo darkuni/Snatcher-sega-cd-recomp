@@ -219,7 +219,7 @@ def explore(im, entry, entries):
 def const_target(i):
     o = i.ops[0]
     if o[0] in ('absw', 'absl', 'pcd'):
-        return o[1]
+        return o[1] & 0xffffff      # code addresses: the bus is 24 bits wide
     return None
 
 
@@ -272,7 +272,7 @@ class Emit:
         if k == 'idx':
             return [], f'(c.a[{o[1]}] + {o[2]} + {self.xr(o[3], o[4])})'
         if k in ('absw', 'absl', 'pcd'):
-            return [], f'0x{o[1]:06x}u'
+            return [], f'0x{o[1]:06x}u'     # full 32-bit value (lea/pea keep bits 24-31)
         if k == 'pcx':
             return [], f'(0x{o[1]:06x}u + {o[2]} + {self.xr(o[3], o[4])})'
         raise ValueError(o)
@@ -490,7 +490,10 @@ class Emit:
             L.append(f'uint32_t {t} = {addr}; c.push32({t});')
         elif op == 'link':
             n = o[0][1]
-            L.append(f'c.push32(c.a[{n}]); c.a[{n}] = c.a[7]; c.a[7] += {o[1][1]};')
+            if n == 7:      # link a7: the value pushed is the already decremented a7
+                L.append(f'c.a[7] -= 4; c.wr32(c.a[7], c.a[7]); c.a[7] += {o[1][1]};')
+            else:
+                L.append(f'c.push32(c.a[{n}]); c.a[{n}] = c.a[7]; c.a[7] += {o[1][1]};')
         elif op == 'unlk':
             n = o[0][1]
             L.append(f'c.a[7] = c.a[{n}]; c.a[{n}] = c.pop32();')

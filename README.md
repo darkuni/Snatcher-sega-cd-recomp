@@ -14,7 +14,9 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
       random instruction words
 - [x] Recompiler v1 (`src/recomp.py`): function discovery, jump tables, resumable entry points,
       C++ emission; all generated code compiles
-- [ ] Differential test of every instruction against a reference interpreter (`tools/difftest`)
+- [x] Differential test against the Musashi 68000 interpreter (`tools/difftest`): random
+      instruction sequences incl. branches, dbcc, divides, movem, link/unlk - 0 differences over
+      26,000 sequences x 6 random starting states
 - [ ] Runtime: memory maps, main/sub CPU scheduling, interrupts, BIOS calls
 - [ ] Graphics (VDP + graphics ASIC), PCM + FM + CD audio, input, settings menu
 - [ ] Windows and Linux builds

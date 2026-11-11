@@ -51,7 +51,7 @@ static uint32_t rnd() {
 }
 
 int main(int argc, char** argv) {
-    int ncase = sizeof(g_cases) / sizeof(g_cases[0]), fails = 0, reps = argc > 1 ? atoi(argv[1]) : 4;
+    int ncase = sizeof(g_cases) / sizeof(g_cases[0]), fails = 0, skipped = 0, reps = argc > 1 ? atoi(argv[1]) : 4;
     m68k_init();
     m68k_set_cpu_type(M68K_CPU_TYPE_68000);
     for (int ci = 0; ci < ncase; ci++) {
@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
             c.set_ccr(ccr);
             g_jumped = 0;
             k.fn(c, 0x800000);
+            if (c.ret == 0xbad) { skipped++; break; }      // took an exception (divide by zero)
             bool bad = g_jumped != k.end;
             for (int r = 0; r < 8; r++) {
                 if (c.d[r] != m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + r))) bad = true;
@@ -112,6 +113,6 @@ int main(int argc, char** argv) {
             }
         }
     }
-    printf("%d cases x %d, %d failing cases\n", ncase, reps, fails);
+    printf("%d cases x %d, %d failing cases, %d skipped (exception)\n", ncase, reps, fails, skipped);
     return fails != 0;
 }

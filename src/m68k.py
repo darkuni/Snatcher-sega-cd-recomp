@@ -7,7 +7,8 @@ Operands (tuples):
     ('ind', n) ('post', n) ('pre', n)    (An) (An)+ -(An)
     ('disp', n, d16)                     d16(An)
     ('idx', n, d8, xr, xl)               d8(An,Xn) - xr = ('d'|'a', n), xl = long index
-    ('absw', a) ('absl', a)              absolute (absw already sign-extended to 24 bits)
+    ('absw', a) ('absl', a)              absolute, full 32 bits (absw sign-extended); the bus
+                                         ignores bits 24-31, address registers keep them
     ('pcd', target)                      d16(PC), target resolved
     ('pcx', base, d8, xr, xl)            d8(PC,Xn), base = address of the extension word
     ('imm', v)
@@ -113,9 +114,9 @@ class _D:
         elif mode == 6:
             o = ('idx', reg) + self._ext()
         elif reg == 0:
-            o = ('absw', s16(self.w()) & 0xffffff)
+            o = ('absw', s16(self.w()) & 0xffffffff)
         elif reg == 1:
-            o = ('absl', self.l() & 0xffffff)
+            o = ('absl', self.l())
         elif reg == 2:
             base = self.pc
             o = ('pcd', (base + s16(self.w())) & 0xffffff)
@@ -324,7 +325,7 @@ def _line4(d, w, mode, reg, rx, sz):
             return Insn(a, 'movem', size, [ea, ('regs', mask)])
         ea = d.ea(mode, reg, size, CALT | {'pre'})
         if ea[0] == 'pre':
-            mask = int(f'{mask:016b}', 2)   # -(An) list is reversed: bit 0 = a7
+            mask = int(f'{mask:016b}'[::-1], 2)   # -(An) list is reversed: bit 0 = a7
         return Insn(a, 'movem', size, [('regs', mask), ea])
     if w == 0x4afc:
         return Insn(a, 'illegal')
