@@ -78,7 +78,16 @@ static bool sub_runs() { return !g.sub_reset && !g.sub_busreq; }
 static void hw_line() {         // called with s_mtx held, once both CPUs finished the line
     g.main.limit += MAIN_LINE;
     g.sub.limit += SUB_LINE;
-    if (g.line < g.vdp.height()) g.vdp.render_line(g.line);
+    if (g.line < g.vdp.height()) {
+        g.vdp.render_line(g.line);
+        // H-int counter: counts down each active line, fires and reloads from reg 10 when it underflows
+        if (--g.hcount < 0) {
+            g.hcount = g.vdp.reg[10];
+            if (g.vdp.hint_enabled()) g.hint_pending = true;
+        }
+    } else {
+        g.hcount = g.vdp.reg[10];              // reloaded every line during V-blank
+    }
     if (++g.line == g.vdp.height()) {
         g.vdp.vint_flag = true;
         // V-blank status rises at the start of the line; the 68000 takes the V-int a little later,
@@ -176,6 +185,11 @@ static bool take_interrupt(Cpu& c, uint32_t resume) {
             g.vdp.vint_flag = false;
             g.n_vint++;
             return deliver(c, 6, g.main_vint, resume, false);
+        }
+        if (g.hint_pending && c.imask < 4) {
+            g.hint_pending = false;
+            // Sega CD: the level 4 vector points at $FFxxxx, low word from $A12006
+            return deliver(c, 4, 0xff0000 | g.hint_vec, resume, false);
         }
     } else {
         if ((g.sub_imask & 8) && g.timer && c.imask < 3 && c.cycles >= g.timer_due) {

@@ -41,6 +41,7 @@ static void main_ga_wr8(uint32_t a, uint8_t v) {
         return;
     case 0x02: g.prg_protect = v; return;
     case 0x03:
+        if (getenv("SNATCHER_WRLOG")) fprintf(stderr, "main a12003=%02x f%llu line %d\n", v, (unsigned long long)g.frame, g.line);
         g.prg_bank = (v >> 6) & 3;
         if (v & 2) { g.dmna = true; if (!g.mode1m) g.ret = false; g.n_dmna++; }   // give 2M word RAM to the sub CPU
         return;
@@ -67,6 +68,8 @@ uint8_t MainBus::rd8(uint32_t a) {
     if (a == 0xa10001) return 0x80;             // overseas, NTSC, expansion (Sega CD) present
     if (a == 0xa10003) {                        // 3-button pad, port 1 (buttons active low)
         uint8_t p = g.pad, th = g.pad_th & 0x40;
+        if (getenv("SNATCHER_PADLOG") && g.frame >= 1298 && g.frame <= 1304)
+            fprintf(stderr, "pad read f%llu th=%d ctrl=%02x pad=%02x\n", (unsigned long long)g.frame, th ? 1 : 0, g.pad_ctrl, p);
         if (th) return 0x40 | (~((p & 0x0f) | ((p >> 4 & 1) << 4) | ((p >> 5 & 1) << 5)) & 0x3f);   // C B R L D U
         return (~((p & 0x03) | ((p >> 6 & 1) << 4) | ((p >> 7 & 1) << 5)) & 0x33);               // St A 0 0 D U
     }
@@ -149,6 +152,7 @@ static void sub_ga_wr8(uint32_t a, uint8_t v) {
     uint32_t r = a & 0x1ff;
     switch (r) {
     case 0x003:
+        if (getenv("SNATCHER_WRLOG")) fprintf(stderr, "sub  ff8003=%02x f%llu line %d (loop %06x)\n", v, (unsigned long long)g.frame, g.line, g.sub.dbg_pc);
         g.mode1m = v & 4;
         if (v & 1) { g.ret = true; g.dmna = false; g.n_ret++; }    // hand 2M word RAM back to the main CPU
         return;

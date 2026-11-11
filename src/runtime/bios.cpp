@@ -2,6 +2,7 @@
 //   main CPU: $364 (boot security check), $368 (set V-int handler), $28C (return to BIOS),
 //             $FFFDAE (RAM cartridge backup RAM - reports no cartridge)
 //   sub CPU:  $5F10 _WAITVSYNC, $5F16 _BURAM, $5F22 _CDBIOS
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <string>
@@ -89,6 +90,13 @@ static void msf(uint32_t lba, uint8_t out[4]) {
 static void cdbios(Cpu& c) {
     uint32_t fn = c.d[0] & 0xffff;
     CdHle& cd = g.cd;
+    static const char* log = getenv("SNATCHER_CDLOG");
+    if (log && g.frame >= (uint64_t)atoi(log)) {
+        static uint32_t last = ~0u; static int rep = 0;
+        if (fn == last && fn >= 0x8a && fn <= 0x8a) { if (++rep % 500 == 0) fprintf(stderr, "[cd] f%llu %02x x%d ready=%d left=%u\n", (unsigned long long)g.frame, fn, rep, cd.ready, cd.left); }
+        else { rep = 0; fprintf(stderr, "[cd] f%llu fn %02x a0=%06x [%08x %08x] ready=%d left=%u lba=%u mode=%d\n", (unsigned long long)g.frame, fn, c.a[0], c.rd32(c.a[0]), c.rd32(c.a[0] + 4), cd.ready, cd.left, cd.lba, g.cdc_mode); }
+        last = fn;
+    }
     c.c = false;
     switch (fn) {
     case 0x0002: cd.play_mode = 0; cd.audio_track = 0; break;                // MSCSTOP

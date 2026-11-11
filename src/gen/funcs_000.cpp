@@ -2715,6 +2715,553 @@ L_ff0a7e:;
   }
 }
 
+void ip_ff0cce(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff0cce: goto L_ff0cce;
+    case 0xff0d04: goto L_ff0d04;
+    case 0xff0d10: goto L_ff0d10;
+    case 0xff0d32: goto L_ff0d32;
+    default: c.miss(pc); return;
+  }
+L_ff0cce:;
+  { // ff0cce: move.w sr, -(a7)
+    c.cycles += 8;
+    c.a[7] -= 2; uint32_t t1 = c.a[7];
+    c.wr16(t1, c.get_sr());
+  }
+L_ff0cd0:;
+  { // ff0cd0: ori.w #$700, sr
+    c.cycles += 8;
+    c.set_sr(c.get_sr() | 0x700u);
+    if (!c.check_irq(0xff0cd4u)) return;
+  }
+L_ff0cd4:;
+  { // ff0cd4: movem.l <0101>, -(a7)
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      ea -= 4; c.wr32(ea, c.a[0]);
+      ea -= 4; c.wr32(ea, c.d[0]);
+      c.a[7] = ea; }
+  }
+L_ff0cd8:;
+  { // ff0cd8: lea.l $c00004, a0
+    c.cycles += 20;
+    c.a[0] = 0xc00004u;
+  }
+L_ff0cde:;
+  { // ff0cde: move.w $ffffe034, d0
+    c.cycles += 12;
+    uint32_t t2 = c.rd16(0xffffe034u);
+    c.d[0] = (c.d[0] & ~0xffffu) | ((t2) & 0xffffu);
+    c.logic<2>(t2);
+  }
+L_ff0ce2:;
+  { // ff0ce2: tst.w $ffffe064
+    c.cycles += 12;
+    c.logic<2>(c.rd16(0xffffe064u));
+  }
+L_ff0ce6:;
+  { // ff0ce6: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) goto L_ff0d32;
+  }
+L_ff0ce8:;
+  { // ff0ce8: bcc 
+    c.cycles += 4;
+    if (c.cond_mi()) goto L_ff0d32;
+  }
+L_ff0cea:;
+  { // ff0cea: cmpi.w #$2, $ffffe064
+    c.cycles += 16;
+    uint32_t t3 = 0x2u;
+    c.cmp<2>(t3, c.rd16(0xffffe064u));
+  }
+L_ff0cf0:;
+  { // ff0cf0: bcc 
+    c.cycles += 4;
+    if (c.cond_mi()) goto L_ff0d48;
+  }
+L_ff0cf2:;
+  { // ff0cf2: cmpi.w #$7, d0
+    c.cycles += 8;
+    uint32_t t4 = 0x7u;
+    c.cmp<2>(t4, (c.d[0] & 0xffffu));
+  }
+L_ff0cf6:;
+  { // ff0cf6: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) goto L_ff0d20;
+  }
+L_ff0cf8:;
+  { // ff0cf8: cmpi.w #$a, d0
+    c.cycles += 8;
+    uint32_t t5 = 0xau;
+    c.cmp<2>(t5, (c.d[0] & 0xffffu));
+  }
+L_ff0cfc:;
+  { // ff0cfc: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) goto L_ff0d32;
+  }
+L_ff0cfe:;
+  { // ff0cfe: cmpi.w #$4, d0
+    c.cycles += 8;
+    uint32_t t6 = 0x4u;
+    c.cmp<2>(t6, (c.d[0] & 0xffffu));
+  }
+L_ff0d02:;
+  { // ff0d02: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) goto L_ff0d10;
+  }
+L_ff0d04:;
+  { // ff0d04: addq.w #$1, $ffffe034
+    c.cycles += 12;
+    uint32_t t7 = 0x1u;
+    c.wr16(0xffffe034u, c.add<2>(t7, c.rd16(0xffffe034u)));
+  }
+L_ff0d08:;
+  { // ff0d08: movem.l (a7)+, <0101>
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      c.d[0] = c.rd32(ea); ea += 4;
+      c.a[0] = c.rd32(ea); ea += 4;
+      c.a[7] = ea;
+    }
+  }
+L_ff0d0c:;
+  { // ff0d0c: move.w (a7)+, sr
+    c.cycles += 8;
+    uint32_t t8 = c.a[7]; c.a[7] += 2;
+    c.set_sr(c.rd16(t8));
+    if (!c.check_irq(0xff0d0eu)) return;
+  }
+L_ff0d0e:;
+  { // ff0d0e: rte 
+    c.cycles += 16;
+    c.rte(); return;
+  }
+L_ff0d10:;
+  { // ff0d10: bclr.b #$6, $ffef03
+    c.cycles += 20;
+    uint32_t t9 = c.rd8(0xffef03u); c.z = !((t9 >> 6) & 1);
+    c.wr8(0xffef03u, t9 & ~(1u << 6));
+  }
+L_ff0d18:;
+  { // ff0d18: move.w $ffef02, (a0)
+    c.cycles += 20;
+    uint32_t t10 = c.rd16(0xffef02u);
+    c.wr16(c.a[0], t10);
+    c.logic<2>(t10);
+  }
+L_ff0d1e:;
+  { // ff0d1e: bra 
+    c.cycles += 4;
+    { if (c.cycles >= c.limit && !c.sync(0xff0d04u)) return; goto L_ff0d04; }
+  }
+L_ff0d20:;
+  { // ff0d20: move.w #$8f02, (a0)
+    c.cycles += 12;
+    uint32_t t11 = 0x8f02u;
+    c.wr16(c.a[0], t11);
+    c.logic<2>(t11);
+  }
+L_ff0d24:;
+  { // ff0d24: move.l #$40000010, (a0)
+    c.cycles += 20;
+    uint32_t t12 = 0x40000010u;
+    c.wr32(c.a[0], t12);
+    c.logic<4>(t12);
+  }
+L_ff0d2a:;
+  { // ff0d2a: move.w #$3d0, -4(a0)
+    c.cycles += 16;
+    uint32_t t13 = 0x3d0u;
+    uint32_t t14 = (c.a[0] + -4);
+    c.wr16(t14, t13);
+    c.logic<2>(t13);
+  }
+L_ff0d30:;
+  { // ff0d30: bra 
+    c.cycles += 4;
+    { if (c.cycles >= c.limit && !c.sync(0xff0d04u)) return; goto L_ff0d04; }
+  }
+L_ff0d32:;
+  { // ff0d32: bset.b #$6, $ffef03
+    c.cycles += 20;
+    uint32_t t15 = c.rd8(0xffef03u); c.z = !((t15 >> 6) & 1);
+    c.wr8(0xffef03u, t15 | (1u << 6));
+  }
+L_ff0d3a:;
+  { // ff0d3a: move.w $ffef02, (a0)
+    c.cycles += 20;
+    uint32_t t16 = c.rd16(0xffef02u);
+    c.wr16(c.a[0], t16);
+    c.logic<2>(t16);
+  }
+L_ff0d40:;
+  { // ff0d40: move.w $ffef00, (a0)
+    c.cycles += 20;
+    uint32_t t17 = c.rd16(0xffef00u);
+    c.wr16(c.a[0], t17);
+    c.logic<2>(t17);
+  }
+L_ff0d46:;
+  { // ff0d46: bra 
+    c.cycles += 4;
+    { if (c.cycles >= c.limit && !c.sync(0xff0d04u)) return; goto L_ff0d04; }
+  }
+L_ff0d48:;
+  { // ff0d48: cmpi.w #$7, d0
+    c.cycles += 8;
+    uint32_t t18 = 0x7u;
+    c.cmp<2>(t18, (c.d[0] & 0xffffu));
+  }
+L_ff0d4c:;
+  { // ff0d4c: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) goto L_ff0d5c;
+  }
+L_ff0d4e:;
+  { // ff0d4e: cmpi.w #$8, d0
+    c.cycles += 8;
+    uint32_t t19 = 0x8u;
+    c.cmp<2>(t19, (c.d[0] & 0xffffu));
+  }
+L_ff0d52:;
+  { // ff0d52: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) { if (c.cycles >= c.limit && !c.sync(0xff0d32u)) return; goto L_ff0d32; }
+  }
+L_ff0d54:;
+  { // ff0d54: cmpi.w #$6, d0
+    c.cycles += 8;
+    uint32_t t20 = 0x6u;
+    c.cmp<2>(t20, (c.d[0] & 0xffffu));
+  }
+L_ff0d58:;
+  { // ff0d58: bcc 
+    c.cycles += 4;
+    if (c.cond_eq()) { if (c.cycles >= c.limit && !c.sync(0xff0d10u)) return; goto L_ff0d10; }
+  }
+L_ff0d5a:;
+  { // ff0d5a: bra 
+    c.cycles += 4;
+    { if (c.cycles >= c.limit && !c.sync(0xff0d04u)) return; goto L_ff0d04; }
+  }
+L_ff0d5c:;
+  { // ff0d5c: move.w #$8f02, (a0)
+    c.cycles += 12;
+    uint32_t t21 = 0x8f02u;
+    c.wr16(c.a[0], t21);
+    c.logic<2>(t21);
+  }
+L_ff0d60:;
+  { // ff0d60: move.l #$40000010, (a0)
+    c.cycles += 20;
+    uint32_t t22 = 0x40000010u;
+    c.wr32(c.a[0], t22);
+    c.logic<4>(t22);
+  }
+L_ff0d66:;
+  { // ff0d66: move.w #$3f0, -4(a0)
+    c.cycles += 16;
+    uint32_t t23 = 0x3f0u;
+    uint32_t t24 = (c.a[0] + -4);
+    c.wr16(t24, t23);
+    c.logic<2>(t23);
+  }
+L_ff0d6c:;
+  { // ff0d6c: bra 
+    c.cycles += 4;
+    { if (c.cycles >= c.limit && !c.sync(0xff0d04u)) return; goto L_ff0d04; }
+  }
+}
+
+void ip_ff0ea8(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff0ea8: goto L_ff0ea8;
+    default: c.miss(pc); return;
+  }
+L_ff0ea8:;
+  { // ff0ea8: move.w sr, -(a7)
+    c.cycles += 8;
+    c.a[7] -= 2; uint32_t t1 = c.a[7];
+    c.wr16(t1, c.get_sr());
+  }
+L_ff0eaa:;
+  { // ff0eaa: ori.w #$700, sr
+    c.cycles += 8;
+    c.set_sr(c.get_sr() | 0x700u);
+    if (!c.check_irq(0xff0eaeu)) return;
+  }
+L_ff0eae:;
+  { // ff0eae: movem.l <0101>, -(a7)
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      ea -= 4; c.wr32(ea, c.a[0]);
+      ea -= 4; c.wr32(ea, c.d[0]);
+      c.a[7] = ea; }
+  }
+L_ff0eb2:;
+  { // ff0eb2: move.w $ffffe034, d0
+    c.cycles += 12;
+    uint32_t t2 = c.rd16(0xffffe034u);
+    c.d[0] = (c.d[0] & ~0xffffu) | ((t2) & 0xffffu);
+    c.logic<2>(t2);
+  }
+L_ff0eb6:;
+  { // ff0eb6: cmp.w $ffffe064, d0
+    c.cycles += 12;
+    uint32_t t3 = c.rd16(0xffffe064u);
+    c.cmp<2>(t3, (c.d[0] & 0xffffu));
+  }
+L_ff0eba:;
+  { // ff0eba: bcc 
+    c.cycles += 4;
+    if (c.cond_ne()) goto L_ff0eee;
+  }
+L_ff0ebc:;
+  { // ff0ebc: lea.l $c00004, a0
+    c.cycles += 20;
+    c.a[0] = 0xc00004u;
+  }
+L_ff0ec2:;
+  { // ff0ec2: moveq.l #$0, d0
+    c.cycles += 4;
+    uint32_t t4 = 0x0u;
+    c.d[0] = t4;
+    c.logic<4>(t4);
+  }
+L_ff0ec4:;
+  { // ff0ec4: move.l $ffffe066, d0
+    c.cycles += 16;
+    uint32_t t5 = c.rd32(0xffffe066u);
+    c.d[0] = t5;
+    c.logic<4>(t5);
+  }
+L_ff0ec8:;
+  { // ff0ec8: move.w $ffffe066, d0
+    c.cycles += 12;
+    uint32_t t6 = c.rd16(0xffffe066u);
+    c.d[0] = (c.d[0] & ~0xffffu) | ((t6) & 0xffffu);
+    c.logic<2>(t6);
+  }
+L_ff0ecc:;
+  { // ff0ecc: move.w #$8f02, (a0)
+    c.cycles += 12;
+    uint32_t t7 = 0x8f02u;
+    c.wr16(c.a[0], t7);
+    c.logic<2>(t7);
+  }
+L_ff0ed0:;
+  { // ff0ed0: move.l #$40000010, (a0)
+    c.cycles += 20;
+    uint32_t t8 = 0x40000010u;
+    c.wr32(c.a[0], t8);
+    c.logic<4>(t8);
+  }
+L_ff0ed6:;
+  { // ff0ed6: move.l d0, -4(a0)
+    c.cycles += 16;
+    uint32_t t9 = c.d[0];
+    uint32_t t10 = (c.a[0] + -4);
+    c.wr32(t10, t9);
+    c.logic<4>(t9);
+  }
+L_ff0eda:;
+  { // ff0eda: move.w $ffef00, (a0)
+    c.cycles += 20;
+    uint32_t t11 = c.rd16(0xffef00u);
+    c.wr16(c.a[0], t11);
+    c.logic<2>(t11);
+  }
+L_ff0ee0:;
+  { // ff0ee0: move.l #$78000003, (a0)
+    c.cycles += 20;
+    uint32_t t12 = 0x78000003u;
+    c.wr32(c.a[0], t12);
+    c.logic<4>(t12);
+  }
+L_ff0ee6:;
+  { // ff0ee6: move.l #$0, -4(a0)
+    c.cycles += 24;
+    uint32_t t13 = 0x0u;
+    uint32_t t14 = (c.a[0] + -4);
+    c.wr32(t14, t13);
+    c.logic<4>(t13);
+  }
+L_ff0eee:;
+  { // ff0eee: addq.w #$1, $ffffe034
+    c.cycles += 12;
+    uint32_t t15 = 0x1u;
+    c.wr16(0xffffe034u, c.add<2>(t15, c.rd16(0xffffe034u)));
+  }
+L_ff0ef2:;
+  { // ff0ef2: movem.l (a7)+, <0101>
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      c.d[0] = c.rd32(ea); ea += 4;
+      c.a[0] = c.rd32(ea); ea += 4;
+      c.a[7] = ea;
+    }
+  }
+L_ff0ef6:;
+  { // ff0ef6: move.w (a7)+, sr
+    c.cycles += 8;
+    uint32_t t16 = c.a[7]; c.a[7] += 2;
+    c.set_sr(c.rd16(t16));
+    if (!c.check_irq(0xff0ef8u)) return;
+  }
+L_ff0ef8:;
+  { // ff0ef8: rte 
+    c.cycles += 16;
+    c.rte(); return;
+  }
+}
+
+void ip_ff0efa(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff0efa: goto L_ff0efa;
+    default: c.miss(pc); return;
+  }
+L_ff0efa:;
+  { // ff0efa: move.w sr, -(a7)
+    c.cycles += 8;
+    c.a[7] -= 2; uint32_t t1 = c.a[7];
+    c.wr16(t1, c.get_sr());
+  }
+L_ff0efc:;
+  { // ff0efc: ori.w #$700, sr
+    c.cycles += 8;
+    c.set_sr(c.get_sr() | 0x700u);
+    if (!c.check_irq(0xff0f00u)) return;
+  }
+L_ff0f00:;
+  { // ff0f00: movem.l <0101>, -(a7)
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      ea -= 4; c.wr32(ea, c.a[0]);
+      ea -= 4; c.wr32(ea, c.d[0]);
+      c.a[7] = ea; }
+  }
+L_ff0f04:;
+  { // ff0f04: move.w $ffffe034, d0
+    c.cycles += 12;
+    uint32_t t2 = c.rd16(0xffffe034u);
+    c.d[0] = (c.d[0] & ~0xffffu) | ((t2) & 0xffffu);
+    c.logic<2>(t2);
+  }
+L_ff0f08:;
+  { // ff0f08: cmpi.w #$11, d0
+    c.cycles += 8;
+    uint32_t t3 = 0x11u;
+    c.cmp<2>(t3, (c.d[0] & 0xffffu));
+  }
+L_ff0f0c:;
+  { // ff0f0c: bcc 
+    c.cycles += 4;
+    if (c.cond_ne()) goto L_ff0f40;
+  }
+L_ff0f0e:;
+  { // ff0f0e: lea.l $c00004, a0
+    c.cycles += 20;
+    c.a[0] = 0xc00004u;
+  }
+L_ff0f14:;
+  { // ff0f14: moveq.l #$0, d0
+    c.cycles += 4;
+    uint32_t t4 = 0x0u;
+    c.d[0] = t4;
+    c.logic<4>(t4);
+  }
+L_ff0f16:;
+  { // ff0f16: move.l $ffffe064, d0
+    c.cycles += 16;
+    uint32_t t5 = c.rd32(0xffffe064u);
+    c.d[0] = t5;
+    c.logic<4>(t5);
+  }
+L_ff0f1a:;
+  { // ff0f1a: move.w $ffffe064, d0
+    c.cycles += 12;
+    uint32_t t6 = c.rd16(0xffffe064u);
+    c.d[0] = (c.d[0] & ~0xffffu) | ((t6) & 0xffffu);
+    c.logic<2>(t6);
+  }
+L_ff0f1e:;
+  { // ff0f1e: move.w #$8f02, (a0)
+    c.cycles += 12;
+    uint32_t t7 = 0x8f02u;
+    c.wr16(c.a[0], t7);
+    c.logic<2>(t7);
+  }
+L_ff0f22:;
+  { // ff0f22: move.l #$40000010, (a0)
+    c.cycles += 20;
+    uint32_t t8 = 0x40000010u;
+    c.wr32(c.a[0], t8);
+    c.logic<4>(t8);
+  }
+L_ff0f28:;
+  { // ff0f28: move.l d0, -4(a0)
+    c.cycles += 16;
+    uint32_t t9 = c.d[0];
+    uint32_t t10 = (c.a[0] + -4);
+    c.wr32(t10, t9);
+    c.logic<4>(t9);
+  }
+L_ff0f2c:;
+  { // ff0f2c: move.w $ffef00, (a0)
+    c.cycles += 20;
+    uint32_t t11 = c.rd16(0xffef00u);
+    c.wr16(c.a[0], t11);
+    c.logic<2>(t11);
+  }
+L_ff0f32:;
+  { // ff0f32: move.l #$78000003, (a0)
+    c.cycles += 20;
+    uint32_t t12 = 0x78000003u;
+    c.wr32(c.a[0], t12);
+    c.logic<4>(t12);
+  }
+L_ff0f38:;
+  { // ff0f38: move.l #$0, -4(a0)
+    c.cycles += 24;
+    uint32_t t13 = 0x0u;
+    uint32_t t14 = (c.a[0] + -4);
+    c.wr32(t14, t13);
+    c.logic<4>(t13);
+  }
+L_ff0f40:;
+  { // ff0f40: addq.w #$1, $ffffe034
+    c.cycles += 12;
+    uint32_t t15 = 0x1u;
+    c.wr16(0xffffe034u, c.add<2>(t15, c.rd16(0xffffe034u)));
+  }
+L_ff0f44:;
+  { // ff0f44: movem.l (a7)+, <0101>
+    c.cycles += 24;
+    { uint32_t ea = c.a[7];
+      c.d[0] = c.rd32(ea); ea += 4;
+      c.a[0] = c.rd32(ea); ea += 4;
+      c.a[7] = ea;
+    }
+  }
+L_ff0f48:;
+  { // ff0f48: move.w (a7)+, sr
+    c.cycles += 8;
+    uint32_t t16 = c.a[7]; c.a[7] += 2;
+    c.set_sr(c.rd16(t16));
+    if (!c.check_irq(0xff0f4au)) return;
+  }
+L_ff0f4a:;
+  { // ff0f4a: rte 
+    c.cycles += 16;
+    c.rte(); return;
+  }
+}
+
 void ip_ff1284(Cpu& c, uint32_t pc) {
   switch (pc) {
     case 0xff1284: goto L_ff1284;
@@ -19120,6 +19667,241 @@ L_ff496a:;
   }
 }
 
+void ip_ff496c(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff496c: goto L_ff496c;
+    default: c.miss(pc); return;
+  }
+L_ff496c:;
+  { // ff496c: move.b (a0)+, 15(a1)
+    c.cycles += 16;
+    uint32_t t1 = c.a[0]; c.a[0] += 1;
+    uint32_t t2 = c.rd8(t1);
+    uint32_t t3 = (c.a[1] + 15);
+    c.wr8(t3, t2);
+    c.logic<1>(t2);
+  }
+L_ff4970:;
+  { // ff4970: move.b (a0)+, 12(a1)
+    c.cycles += 16;
+    uint32_t t4 = c.a[0]; c.a[0] += 1;
+    uint32_t t5 = c.rd8(t4);
+    uint32_t t6 = (c.a[1] + 12);
+    c.wr8(t6, t5);
+    c.logic<1>(t5);
+  }
+L_ff4974:;
+  { // ff4974: move.b (a0)+, d2
+    c.cycles += 8;
+    uint32_t t7 = c.a[0]; c.a[0] += 1;
+    uint32_t t8 = c.rd8(t7);
+    c.d[2] = (c.d[2] & ~0xffu) | ((t8) & 0xffu);
+    c.logic<1>(t8);
+  }
+L_ff4976:;
+  { // ff4976: move.b d2, 17(a1)
+    c.cycles += 12;
+    uint32_t t9 = (c.d[2] & 0xffu);
+    uint32_t t10 = (c.a[1] + 17);
+    c.wr8(t10, t9);
+    c.logic<1>(t9);
+  }
+L_ff497a:;
+  { // ff497a: asl.w #$8, d2
+    c.cycles += 4;
+    c.d[2] = (c.d[2] & ~0xffffu) | ((c.asl<2>(0x8u, (c.d[2] & 0xffffu))) & 0xffffu);
+  }
+L_ff497c:;
+  { // ff497c: move.w d2, 74(a1)
+    c.cycles += 12;
+    uint32_t t11 = (c.d[2] & 0xffffu);
+    uint32_t t12 = (c.a[1] + 74);
+    c.wr16(t12, t11);
+    c.logic<2>(t11);
+  }
+L_ff4980:;
+  { // ff4980: clr.b 16(a1)
+    c.cycles += 12;
+    uint32_t t13 = (c.a[1] + 16);
+    c.wr8(t13, 0);
+    c.logic<1>(0);
+  }
+L_ff4984:;
+  { // ff4984: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
+void ip_ff499c(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff499c: goto L_ff499c;
+    default: c.miss(pc); return;
+  }
+L_ff499c:;
+  { // ff499c: move.l a0, 100(a1)
+    c.cycles += 16;
+    uint32_t t1 = c.a[0];
+    uint32_t t2 = (c.a[1] + 100);
+    c.wr32(t2, t1);
+    c.logic<4>(t1);
+  }
+L_ff49a0:;
+  { // ff49a0: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
+void ip_ff49f2(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff49f2: goto L_ff49f2;
+    default: c.miss(pc); return;
+  }
+L_ff49f2:;
+  { // ff49f2: move.b (a0)+, d0
+    c.cycles += 8;
+    uint32_t t1 = c.a[0]; c.a[0] += 1;
+    uint32_t t2 = c.rd8(t1);
+    c.d[0] = (c.d[0] & ~0xffu) | ((t2) & 0xffu);
+    c.logic<1>(t2);
+  }
+L_ff49f4:;
+  { // ff49f4: tst.b d0
+    c.cycles += 4;
+    c.logic<1>((c.d[0] & 0xffu));
+  }
+L_ff49f6:;
+  { // ff49f6: bcc 
+    c.cycles += 8;
+    if (c.cond_eq()) goto L_ff4a1a;
+  }
+L_ff49fa:;
+  { // ff49fa: addq.b #$1, 2(a1)
+    c.cycles += 12;
+    uint32_t t3 = 0x1u;
+    uint32_t t4 = (c.a[1] + 2);
+    c.wr8(t4, c.add<1>(t3, c.rd8(t4)));
+  }
+L_ff49fe:;
+  { // ff49fe: cmp.b 2(a1), d0
+    c.cycles += 12;
+    uint32_t t5 = (c.a[1] + 2);
+    uint32_t t6 = c.rd8(t5);
+    c.cmp<1>(t6, (c.d[0] & 0xffu));
+  }
+L_ff4a02:;
+  { // ff4a02: bcc 
+    c.cycles += 8;
+    if (c.cond_ne()) goto L_ff4a1a;
+  }
+L_ff4a06:;
+  { // ff4a06: clr.b 2(a1)
+    c.cycles += 12;
+    uint32_t t7 = (c.a[1] + 2);
+    c.wr8(t7, 0);
+    c.logic<1>(0);
+  }
+L_ff4a0a:;
+  { // ff4a0a: clr.w 52(a1)
+    c.cycles += 12;
+    uint32_t t8 = (c.a[1] + 52);
+    c.wr16(t8, 0);
+    c.logic<2>(0);
+  }
+L_ff4a0e:;
+  { // ff4a0e: clr.w 56(a1)
+    c.cycles += 12;
+    uint32_t t9 = (c.a[1] + 56);
+    c.wr16(t9, 0);
+    c.logic<2>(0);
+  }
+L_ff4a12:;
+  { // ff4a12: addq.l #$1, a0
+    c.cycles += 4;
+    c.a[0] += 0x1u;
+  }
+L_ff4a14:;
+  { // ff4a14: addq.l #$1, a0
+    c.cycles += 4;
+    c.a[0] += 0x1u;
+  }
+L_ff4a16:;
+  { // ff4a16: bra 
+    c.cycles += 8;
+    goto L_ff4a3a;
+  }
+L_ff4a1a:;
+  { // ff4a1a: move.b (a0)+, d1
+    c.cycles += 8;
+    uint32_t t10 = c.a[0]; c.a[0] += 1;
+    uint32_t t11 = c.rd8(t10);
+    c.d[1] = (c.d[1] & ~0xffu) | ((t11) & 0xffu);
+    c.logic<1>(t11);
+  }
+L_ff4a1c:;
+  { // ff4a1c: bcc 
+    c.cycles += 8;
+    if (c.cond_eq()) goto L_ff4a2c;
+  }
+L_ff4a20:;
+  { // ff4a20: move.b #$1, 49(a1)
+    c.cycles += 16;
+    uint32_t t12 = 0x1u;
+    uint32_t t13 = (c.a[1] + 49);
+    c.wr8(t13, t12);
+    c.logic<1>(t12);
+  }
+L_ff4a26:;
+  { // ff4a26: ext.w d1
+    c.cycles += 4;
+    c.d[1] = (c.d[1] & 0xffff0000u) | (uint16_t)(int8_t)c.d[1]; c.logic<2>(c.d[1]);
+  }
+L_ff4a28:;
+  { // ff4a28: add.w d1, 52(a1)
+    c.cycles += 12;
+    uint32_t t14 = (c.d[1] & 0xffffu);
+    uint32_t t15 = (c.a[1] + 52);
+    c.wr16(t15, c.add<2>(t14, c.rd16(t15)));
+  }
+L_ff4a2c:;
+  { // ff4a2c: move.b (a0)+, d2
+    c.cycles += 8;
+    uint32_t t16 = c.a[0]; c.a[0] += 1;
+    uint32_t t17 = c.rd8(t16);
+    c.d[2] = (c.d[2] & ~0xffu) | ((t17) & 0xffu);
+    c.logic<1>(t17);
+  }
+L_ff4a2e:;
+  { // ff4a2e: ext.w d2
+    c.cycles += 4;
+    c.d[2] = (c.d[2] & 0xffff0000u) | (uint16_t)(int8_t)c.d[2]; c.logic<2>(c.d[2]);
+  }
+L_ff4a30:;
+  { // ff4a30: asl.w #$3, d2
+    c.cycles += 4;
+    c.d[2] = (c.d[2] & ~0xffffu) | ((c.asl<2>(0x3u, (c.d[2] & 0xffffu))) & 0xffffu);
+  }
+L_ff4a32:;
+  { // ff4a32: add.w d2, 56(a1)
+    c.cycles += 12;
+    uint32_t t18 = (c.d[2] & 0xffffu);
+    uint32_t t19 = (c.a[1] + 56);
+    c.wr16(t19, c.add<2>(t18, c.rd16(t19)));
+  }
+L_ff4a36:;
+  { // ff4a36: movea.l 100(a1), a0
+    c.cycles += 16;
+    uint32_t t20 = (c.a[1] + 100);
+    c.a[0] = c.rd32(t20);
+  }
+L_ff4a3a:;
+  { // ff4a3a: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
 void ip_ff4a3c(Cpu& c, uint32_t pc) {
   switch (pc) {
     case 0xff4a3c: goto L_ff4a3c;
@@ -19261,6 +20043,41 @@ L_ff4a94:;
   }
 }
 
+void ip_ff4abc(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff4abc: goto L_ff4abc;
+    default: c.miss(pc); return;
+  }
+L_ff4abc:;
+  { // ff4abc: move.b (a0)+, 7(a1)
+    c.cycles += 16;
+    uint32_t t1 = c.a[0]; c.a[0] += 1;
+    uint32_t t2 = c.rd8(t1);
+    uint32_t t3 = (c.a[1] + 7);
+    c.wr8(t3, t2);
+    c.logic<1>(t2);
+  }
+L_ff4ac0:;
+  { // ff4ac0: bset.b #$4, 34(a1)
+    c.cycles += 16;
+    uint32_t t4 = (c.a[1] + 34);
+    uint32_t t5 = c.rd8(t4); c.z = !((t5 >> 4) & 1);
+    c.wr8(t4, t5 | (1u << 4));
+  }
+L_ff4ac6:;
+  { // ff4ac6: clr.b 9(a1)
+    c.cycles += 12;
+    uint32_t t6 = (c.a[1] + 9);
+    c.wr8(t6, 0);
+    c.logic<1>(0);
+  }
+L_ff4aca:;
+  { // ff4aca: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
 void ip_ff4ae4(Cpu& c, uint32_t pc) {
   switch (pc) {
     case 0xff4ae4: goto L_ff4ae4;
@@ -19377,6 +20194,239 @@ L_ff4b20:;
   }
 L_ff4b24:;
   { // ff4b24: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
+void ip_ff4b26(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff4b26: goto L_ff4b26;
+    default: c.miss(pc); return;
+  }
+L_ff4b26:;
+  { // ff4b26: move.l a0, 92(a1)
+    c.cycles += 16;
+    uint32_t t1 = c.a[0];
+    uint32_t t2 = (c.a[1] + 92);
+    c.wr32(t2, t1);
+    c.logic<4>(t1);
+  }
+L_ff4b2a:;
+  { // ff4b2a: andi.b #$3f, 34(a1)
+    c.cycles += 16;
+    uint32_t t3 = 0x3fu;
+    uint32_t t4 = (c.a[1] + 34);
+    c.wr8(t4, c.logic_and<1>(t3, c.rd8(t4)));
+  }
+L_ff4b30:;
+  { // ff4b30: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
+void ip_ff4b32(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff4b32: goto L_ff4b32;
+    default: c.miss(pc); return;
+  }
+L_ff4b32:;
+  { // ff4b32: btst.b #$6, 34(a1)
+    c.cycles += 16;
+    uint32_t t1 = (c.a[1] + 34);
+    uint32_t t2 = c.rd8(t1); c.z = !((t2 >> 6) & 1);
+  }
+L_ff4b38:;
+  { // ff4b38: bcc 
+    c.cycles += 8;
+    if (c.cond_ne()) goto L_ff4b50;
+  }
+L_ff4b3c:;
+  { // ff4b3c: btst.b #$7, 34(a1)
+    c.cycles += 16;
+    uint32_t t3 = (c.a[1] + 34);
+    uint32_t t4 = c.rd8(t3); c.z = !((t4 >> 7) & 1);
+  }
+L_ff4b42:;
+  { // ff4b42: bcc 
+    c.cycles += 8;
+    if (c.cond_ne()) goto L_ff4b68;
+  }
+L_ff4b46:;
+  { // ff4b46: bset.b #$6, 34(a1)
+    c.cycles += 16;
+    uint32_t t5 = (c.a[1] + 34);
+    uint32_t t6 = c.rd8(t5); c.z = !((t6 >> 6) & 1);
+    c.wr8(t5, t6 | (1u << 6));
+  }
+L_ff4b4c:;
+  { // ff4b4c: bra 
+    c.cycles += 8;
+    goto L_ff4b78;
+  }
+L_ff4b50:;
+  { // ff4b50: bclr.b #$6, 34(a1)
+    c.cycles += 16;
+    uint32_t t7 = (c.a[1] + 34);
+    uint32_t t8 = c.rd8(t7); c.z = !((t8 >> 6) & 1);
+    c.wr8(t7, t8 & ~(1u << 6));
+  }
+L_ff4b56:;
+  { // ff4b56: bset.b #$7, 34(a1)
+    c.cycles += 16;
+    uint32_t t9 = (c.a[1] + 34);
+    uint32_t t10 = c.rd8(t9); c.z = !((t10 >> 7) & 1);
+    c.wr8(t9, t10 | (1u << 7));
+  }
+L_ff4b5c:;
+  { // ff4b5c: move.l a0, 96(a1)
+    c.cycles += 16;
+    uint32_t t11 = c.a[0];
+    uint32_t t12 = (c.a[1] + 96);
+    c.wr32(t12, t11);
+    c.logic<4>(t11);
+  }
+L_ff4b60:;
+  { // ff4b60: movea.l 92(a1), a0
+    c.cycles += 16;
+    uint32_t t13 = (c.a[1] + 92);
+    c.a[0] = c.rd32(t13);
+  }
+L_ff4b64:;
+  { // ff4b64: bra 
+    c.cycles += 8;
+    goto L_ff4b78;
+  }
+L_ff4b68:;
+  { // ff4b68: bset.b #$6, 34(a1)
+    c.cycles += 16;
+    uint32_t t14 = (c.a[1] + 34);
+    uint32_t t15 = c.rd8(t14); c.z = !((t15 >> 6) & 1);
+    c.wr8(t14, t15 | (1u << 6));
+  }
+L_ff4b6e:;
+  { // ff4b6e: bclr.b #$7, 34(a1)
+    c.cycles += 16;
+    uint32_t t16 = (c.a[1] + 34);
+    uint32_t t17 = c.rd8(t16); c.z = !((t17 >> 7) & 1);
+    c.wr8(t16, t17 & ~(1u << 7));
+  }
+L_ff4b74:;
+  { // ff4b74: movea.l 96(a1), a0
+    c.cycles += 16;
+    uint32_t t18 = (c.a[1] + 96);
+    c.a[0] = c.rd32(t18);
+  }
+L_ff4b78:;
+  { // ff4b78: rts 
+    c.cycles += 16;
+    c.ret = c.pop32(); return;
+  }
+}
+
+void ip_ff4b7a(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff4b7a: goto L_ff4b7a;
+    default: c.miss(pc); return;
+  }
+L_ff4b7a:;
+  { // ff4b7a: move.b (a0)+, d0
+    c.cycles += 8;
+    uint32_t t1 = c.a[0]; c.a[0] += 1;
+    uint32_t t2 = c.rd8(t1);
+    c.d[0] = (c.d[0] & ~0xffu) | ((t2) & 0xffu);
+    c.logic<1>(t2);
+  }
+L_ff4b7c:;
+  { // ff4b7c: move.b (a0)+, d1
+    c.cycles += 8;
+    uint32_t t3 = c.a[0]; c.a[0] += 1;
+    uint32_t t4 = c.rd8(t3);
+    c.d[1] = (c.d[1] & ~0xffu) | ((t4) & 0xffu);
+    c.logic<1>(t4);
+  }
+L_ff4b7e:;
+  { // ff4b7e: move.b d0, 22(a1)
+    c.cycles += 12;
+    uint32_t t5 = (c.d[0] & 0xffu);
+    uint32_t t6 = (c.a[1] + 22);
+    c.wr8(t6, t5);
+    c.logic<1>(t5);
+  }
+L_ff4b82:;
+  { // ff4b82: move.b d0, 21(a1)
+    c.cycles += 12;
+    uint32_t t7 = (c.d[0] & 0xffu);
+    uint32_t t8 = (c.a[1] + 21);
+    c.wr8(t8, t7);
+    c.logic<1>(t7);
+  }
+L_ff4b86:;
+  { // ff4b86: move.b d1, 24(a1)
+    c.cycles += 12;
+    uint32_t t9 = (c.d[1] & 0xffu);
+    uint32_t t10 = (c.a[1] + 24);
+    c.wr8(t10, t9);
+    c.logic<1>(t9);
+  }
+L_ff4b8a:;
+  { // ff4b8a: move.b #$80, d0
+    c.cycles += 8;
+    uint32_t t11 = 0x80u;
+    c.d[0] = (c.d[0] & ~0xffu) | ((t11) & 0xffu);
+    c.logic<1>(t11);
+  }
+L_ff4b8e:;
+  { // ff4b8e: cmpi.b #$3, d1
+    c.cycles += 8;
+    uint32_t t12 = 0x3u;
+    c.cmp<1>(t12, (c.d[1] & 0xffu));
+  }
+L_ff4b92:;
+  { // ff4b92: bcc 
+    c.cycles += 8;
+    if (c.cond_ne()) goto L_ff4b9a;
+  }
+L_ff4b96:;
+  { // ff4b96: move.b #$40, d0
+    c.cycles += 8;
+    uint32_t t13 = 0x40u;
+    c.d[0] = (c.d[0] & ~0xffu) | ((t13) & 0xffu);
+    c.logic<1>(t13);
+  }
+L_ff4b9a:;
+  { // ff4b9a: move.b d0, 23(a1)
+    c.cycles += 12;
+    uint32_t t14 = (c.d[0] & 0xffu);
+    uint32_t t15 = (c.a[1] + 23);
+    c.wr8(t15, t14);
+    c.logic<1>(t14);
+  }
+L_ff4b9e:;
+  { // ff4b9e: jsr $ff5a3a(pc)
+    c.cycles += 24;
+    c.push32(0xff4ba2u); c.enter(0xff4ba2u);
+    ip_ff5a3a(c, 0xff5a3au);
+    c.leave(); if (c.ret != 0xff4ba2u) return;
+  }
+  { c.jump(0xff4ba2u); return; }
+}
+
+void ip_ff4ba2(Cpu& c, uint32_t pc) {
+  switch (pc) {
+    case 0xff4ba2: goto L_ff4ba2;
+    default: c.miss(pc); return;
+  }
+L_ff4ba2:;
+  { // ff4ba2: clr.b 25(a1)
+    c.cycles += 12;
+    uint32_t t1 = (c.a[1] + 25);
+    c.wr8(t1, 0);
+    c.logic<1>(0);
+  }
+L_ff4ba6:;
+  { // ff4ba6: rts 
     c.cycles += 16;
     c.ret = c.pop32(); return;
   }
@@ -23726,3131 +24776,6 @@ L_ff57c6:;
   }
 L_ff57ca:;
   { // ff57ca: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff57cc(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff57cc: goto L_ff57cc;
-    default: c.miss(pc); return;
-  }
-L_ff57cc:;
-  { // ff57cc: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 7) & 1);
-  }
-L_ff57d4:;
-  { // ff57d4: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5824;
-  }
-L_ff57d8:;
-  { // ff57d8: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t2 = 0x4u;
-    c.cmp<1>(t2, (c.d[3] & 0xffu));
-  }
-L_ff57dc:;
-  { // ff57dc: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff57ec;
-  }
-L_ff57e0:;
-  { // ff57e0: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t3 = 0x5u;
-    c.cmp<1>(t3, (c.d[3] & 0xffu));
-  }
-L_ff57e4:;
-  { // ff57e4: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5808;
-  }
-L_ff57e8:;
-  { // ff57e8: bra 
-    c.cycles += 8;
-    goto L_ff5824;
-  }
-L_ff57ec:;
-  { // ff57ec: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 0) & 1);
-  }
-L_ff57f4:;
-  { // ff57f4: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5824;
-  }
-L_ff57f8:;
-  { // ff57f8: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t5 = c.rd8(0xff7f24u); c.z = !((t5 >> 6) & 1);
-  }
-L_ff5800:;
-  { // ff5800: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5824;
-  }
-L_ff5804:;
-  { // ff5804: bra 
-    c.cycles += 8;
-    { c.jump(0xff5890u); return; }
-  }
-L_ff5808:;
-  { // ff5808: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t6 = c.rd8(0xff7f24u); c.z = !((t6 >> 1) & 1);
-  }
-L_ff5810:;
-  { // ff5810: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5824;
-  }
-L_ff5814:;
-  { // ff5814: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 6) & 1);
-  }
-L_ff581c:;
-  { // ff581c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5824;
-  }
-L_ff5820:;
-  { // ff5820: bra 
-    c.cycles += 8;
-    { c.jump(0xff5890u); return; }
-  }
-L_ff5824:;
-  { // ff5824: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t8 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t8) & 0xffu);
-    c.logic<1>(t8);
-  }
-  { c.jump(0xff582au); return; }
-}
-
-void ip_ff582a(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff582a: goto L_ff582a;
-    case 0xff5832: goto L_ff5832;
-    case 0xff583c: goto L_ff583c;
-    case 0xff584a: goto L_ff584a;
-    case 0xff5854: goto L_ff5854;
-    case 0xff5862: goto L_ff5862;
-    case 0xff586c: goto L_ff586c;
-    case 0xff587a: goto L_ff587a;
-    case 0xff5884: goto L_ff5884;
-    default: c.miss(pc); return;
-  }
-L_ff582a:;
-  { // ff582a: move.b #$ff, d5
-    c.cycles += 8;
-    uint32_t t1 = 0xffu;
-    c.d[5] = (c.d[5] & ~0xffu) | ((t1) & 0xffu);
-    c.logic<1>(t1);
-  }
-L_ff582e:;
-  { // ff582e: addi.b #$80, d4
-    c.cycles += 8;
-    uint32_t t2 = 0x80u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t2, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5832:;
-  { // ff5832: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t3 = c.rd8(c.a[2]); c.z = !((t3 >> 7) & 1);
-  }
-L_ff5836:;
-  { // ff5836: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5832u)) return; goto L_ff5832; }
-  }
-L_ff583a:;
-  { // ff583a: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t4 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t4);
-    c.logic<1>(t4);
-  }
-L_ff583c:;
-  { // ff583c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t5 = c.rd8(c.a[2]); c.z = !((t5 >> 7) & 1);
-  }
-L_ff5840:;
-  { // ff5840: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff583cu)) return; goto L_ff583c; }
-  }
-L_ff5844:;
-  { // ff5844: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t6 = (c.d[5] & 0xffu);
-    uint32_t t7 = (c.a[3] + 1);
-    c.wr8(t7, t6);
-    c.logic<1>(t6);
-  }
-L_ff5848:;
-  { // ff5848: addq.b #$4, d4
-    c.cycles += 4;
-    uint32_t t8 = 0x4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t8, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff584a:;
-  { // ff584a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t9 = c.rd8(c.a[2]); c.z = !((t9 >> 7) & 1);
-  }
-L_ff584e:;
-  { // ff584e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff584au)) return; goto L_ff584a; }
-  }
-L_ff5852:;
-  { // ff5852: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t10 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t10);
-    c.logic<1>(t10);
-  }
-L_ff5854:;
-  { // ff5854: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t11 = c.rd8(c.a[2]); c.z = !((t11 >> 7) & 1);
-  }
-L_ff5858:;
-  { // ff5858: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5854u)) return; goto L_ff5854; }
-  }
-L_ff585c:;
-  { // ff585c: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t12 = (c.d[5] & 0xffu);
-    uint32_t t13 = (c.a[3] + 1);
-    c.wr8(t13, t12);
-    c.logic<1>(t12);
-  }
-L_ff5860:;
-  { // ff5860: addq.b #$4, d4
-    c.cycles += 4;
-    uint32_t t14 = 0x4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t14, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5862:;
-  { // ff5862: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t15 = c.rd8(c.a[2]); c.z = !((t15 >> 7) & 1);
-  }
-L_ff5866:;
-  { // ff5866: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5862u)) return; goto L_ff5862; }
-  }
-L_ff586a:;
-  { // ff586a: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t16 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t16);
-    c.logic<1>(t16);
-  }
-L_ff586c:;
-  { // ff586c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t17 = c.rd8(c.a[2]); c.z = !((t17 >> 7) & 1);
-  }
-L_ff5870:;
-  { // ff5870: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff586cu)) return; goto L_ff586c; }
-  }
-L_ff5874:;
-  { // ff5874: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t18 = (c.d[5] & 0xffu);
-    uint32_t t19 = (c.a[3] + 1);
-    c.wr8(t19, t18);
-    c.logic<1>(t18);
-  }
-L_ff5878:;
-  { // ff5878: addq.b #$4, d4
-    c.cycles += 4;
-    uint32_t t20 = 0x4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t20, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff587a:;
-  { // ff587a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t21 = c.rd8(c.a[2]); c.z = !((t21 >> 7) & 1);
-  }
-L_ff587e:;
-  { // ff587e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff587au)) return; goto L_ff587a; }
-  }
-L_ff5882:;
-  { // ff5882: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t22 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t22);
-    c.logic<1>(t22);
-  }
-L_ff5884:;
-  { // ff5884: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t23 = c.rd8(c.a[2]); c.z = !((t23 >> 7) & 1);
-  }
-L_ff5888:;
-  { // ff5888: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5884u)) return; goto L_ff5884; }
-  }
-L_ff588c:;
-  { // ff588c: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t24 = (c.d[5] & 0xffu);
-    uint32_t t25 = (c.a[3] + 1);
-    c.wr8(t25, t24);
-    c.logic<1>(t24);
-  }
-  { c.jump(0xff5890u); return; }
-}
-
-void ip_ff5890(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5890: goto L_ff5890;
-    case 0xff58fa: goto L_ff58fa;
-    case 0xff5904: goto L_ff5904;
-    default: c.miss(pc); return;
-  }
-L_ff5890:;
-  { // ff5890: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 7) & 1);
-  }
-L_ff5898:;
-  { // ff5898: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff58e8;
-  }
-L_ff589c:;
-  { // ff589c: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t2 = 0x4u;
-    c.cmp<1>(t2, (c.d[3] & 0xffu));
-  }
-L_ff58a0:;
-  { // ff58a0: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff58b0;
-  }
-L_ff58a4:;
-  { // ff58a4: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t3 = 0x5u;
-    c.cmp<1>(t3, (c.d[3] & 0xffu));
-  }
-L_ff58a8:;
-  { // ff58a8: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff58cc;
-  }
-L_ff58ac:;
-  { // ff58ac: bra 
-    c.cycles += 8;
-    goto L_ff58e8;
-  }
-L_ff58b0:;
-  { // ff58b0: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 0) & 1);
-  }
-L_ff58b8:;
-  { // ff58b8: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff58e8;
-  }
-L_ff58bc:;
-  { // ff58bc: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t5 = c.rd8(0xff7f24u); c.z = !((t5 >> 6) & 1);
-  }
-L_ff58c4:;
-  { // ff58c4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff58e8;
-  }
-L_ff58c8:;
-  { // ff58c8: bra 
-    c.cycles += 8;
-    goto L_ff5910;
-  }
-L_ff58cc:;
-  { // ff58cc: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t6 = c.rd8(0xff7f24u); c.z = !((t6 >> 1) & 1);
-  }
-L_ff58d4:;
-  { // ff58d4: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff58e8;
-  }
-L_ff58d8:;
-  { // ff58d8: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 6) & 1);
-  }
-L_ff58e0:;
-  { // ff58e0: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff58e8;
-  }
-L_ff58e4:;
-  { // ff58e4: bra 
-    c.cycles += 8;
-    goto L_ff5910;
-  }
-L_ff58e8:;
-  { // ff58e8: cmpi.b #$6, d3
-    c.cycles += 8;
-    uint32_t t8 = 0x6u;
-    c.cmp<1>(t8, (c.d[3] & 0xffu));
-  }
-L_ff58ec:;
-  { // ff58ec: bcc 
-    c.cycles += 8;
-    if (c.cond_cs()) goto L_ff58f4;
-  }
-L_ff58f0:;
-  { // ff58f0: bra 
-    c.cycles += 8;
-    goto L_ff5910;
-  }
-L_ff58f4:;
-  { // ff58f4: moveq.l #$28, d4
-    c.cycles += 4;
-    uint32_t t9 = 0x28u;
-    c.d[4] = t9;
-    c.logic<4>(t9);
-  }
-L_ff58f6:;
-  { // ff58f6: move.b 26(pc@ff58f8,d3.w), d5
-    c.cycles += 12;
-    uint32_t t10 = (0xff58f8u + 26 + (uint32_t)(int16_t)c.d[3]);
-    uint32_t t11 = c.rd8(t10);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t11) & 0xffu);
-    c.logic<1>(t11);
-  }
-L_ff58fa:;
-  { // ff58fa: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t12 = c.rd8(c.a[2]); c.z = !((t12 >> 7) & 1);
-  }
-L_ff58fe:;
-  { // ff58fe: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff58fau)) return; goto L_ff58fa; }
-  }
-L_ff5902:;
-  { // ff5902: move.b d4, (a2)
-    c.cycles += 8;
-    uint32_t t13 = (c.d[4] & 0xffu);
-    c.wr8(c.a[2], t13);
-    c.logic<1>(t13);
-  }
-L_ff5904:;
-  { // ff5904: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t14 = c.rd8(c.a[2]); c.z = !((t14 >> 7) & 1);
-  }
-L_ff5908:;
-  { // ff5908: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5904u)) return; goto L_ff5904; }
-  }
-L_ff590c:;
-  { // ff590c: move.b d5, 1(a2)
-    c.cycles += 12;
-    uint32_t t15 = (c.d[5] & 0xffu);
-    uint32_t t16 = (c.a[2] + 1);
-    c.wr8(t16, t15);
-    c.logic<1>(t15);
-  }
-L_ff5910:;
-  { // ff5910: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5918(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5918: goto L_ff5918;
-    case 0xff5982: goto L_ff5982;
-    case 0xff598c: goto L_ff598c;
-    default: c.miss(pc); return;
-  }
-L_ff5918:;
-  { // ff5918: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 7) & 1);
-  }
-L_ff5920:;
-  { // ff5920: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5970;
-  }
-L_ff5924:;
-  { // ff5924: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t2 = 0x4u;
-    c.cmp<1>(t2, (c.d[3] & 0xffu));
-  }
-L_ff5928:;
-  { // ff5928: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5938;
-  }
-L_ff592c:;
-  { // ff592c: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t3 = 0x5u;
-    c.cmp<1>(t3, (c.d[3] & 0xffu));
-  }
-L_ff5930:;
-  { // ff5930: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5954;
-  }
-L_ff5934:;
-  { // ff5934: bra 
-    c.cycles += 8;
-    goto L_ff5970;
-  }
-L_ff5938:;
-  { // ff5938: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 0) & 1);
-  }
-L_ff5940:;
-  { // ff5940: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5970;
-  }
-L_ff5944:;
-  { // ff5944: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t5 = c.rd8(0xff7f24u); c.z = !((t5 >> 6) & 1);
-  }
-L_ff594c:;
-  { // ff594c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5970;
-  }
-L_ff5950:;
-  { // ff5950: bra 
-    c.cycles += 8;
-    goto L_ff5998;
-  }
-L_ff5954:;
-  { // ff5954: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t6 = c.rd8(0xff7f24u); c.z = !((t6 >> 1) & 1);
-  }
-L_ff595c:;
-  { // ff595c: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5970;
-  }
-L_ff5960:;
-  { // ff5960: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 6) & 1);
-  }
-L_ff5968:;
-  { // ff5968: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5970;
-  }
-L_ff596c:;
-  { // ff596c: bra 
-    c.cycles += 8;
-    goto L_ff5998;
-  }
-L_ff5970:;
-  { // ff5970: cmpi.b #$6, d3
-    c.cycles += 8;
-    uint32_t t8 = 0x6u;
-    c.cmp<1>(t8, (c.d[3] & 0xffu));
-  }
-L_ff5974:;
-  { // ff5974: bcc 
-    c.cycles += 8;
-    if (c.cond_cs()) goto L_ff597c;
-  }
-L_ff5978:;
-  { // ff5978: bra 
-    c.cycles += 8;
-    goto L_ff5998;
-  }
-L_ff597c:;
-  { // ff597c: moveq.l #$28, d4
-    c.cycles += 4;
-    uint32_t t9 = 0x28u;
-    c.d[4] = t9;
-    c.logic<4>(t9);
-  }
-L_ff597e:;
-  { // ff597e: move.b 26(pc@ff5980,d3.w), d5
-    c.cycles += 12;
-    uint32_t t10 = (0xff5980u + 26 + (uint32_t)(int16_t)c.d[3]);
-    uint32_t t11 = c.rd8(t10);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t11) & 0xffu);
-    c.logic<1>(t11);
-  }
-L_ff5982:;
-  { // ff5982: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t12 = c.rd8(c.a[2]); c.z = !((t12 >> 7) & 1);
-  }
-L_ff5986:;
-  { // ff5986: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5982u)) return; goto L_ff5982; }
-  }
-L_ff598a:;
-  { // ff598a: move.b d4, (a2)
-    c.cycles += 8;
-    uint32_t t13 = (c.d[4] & 0xffu);
-    c.wr8(c.a[2], t13);
-    c.logic<1>(t13);
-  }
-L_ff598c:;
-  { // ff598c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t14 = c.rd8(c.a[2]); c.z = !((t14 >> 7) & 1);
-  }
-L_ff5990:;
-  { // ff5990: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff598cu)) return; goto L_ff598c; }
-  }
-L_ff5994:;
-  { // ff5994: move.b d5, 1(a2)
-    c.cycles += 12;
-    uint32_t t15 = (c.d[5] & 0xffu);
-    uint32_t t16 = (c.a[2] + 1);
-    c.wr8(t16, t15);
-    c.logic<1>(t15);
-  }
-L_ff5998:;
-  { // ff5998: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5a16(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5a16: goto L_ff5a16;
-    case 0xff5abe: goto L_ff5abe;
-    case 0xff5ac8: goto L_ff5ac8;
-    default: c.miss(pc); return;
-  }
-L_ff5a16:;
-  { // ff5a16: move.b 48(a1), d5
-    c.cycles += 12;
-    uint32_t t1 = (c.a[1] + 48);
-    uint32_t t2 = c.rd8(t1);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t2) & 0xffu);
-    c.logic<1>(t2);
-  }
-L_ff5a1a:;
-  { // ff5a1a: andi.b #$c0, d5
-    c.cycles += 8;
-    uint32_t t3 = 0xc0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_and<1>(t3, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a1e:;
-  { // ff5a1e: bra 
-    c.cycles += 8;
-    goto L_ff5a9c;
-  }
-L_ff5a9c:;
-  { // ff5a9c: btst.b #$3, $ff7f2a
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f2au); c.z = !((t4 >> 3) & 1);
-  }
-L_ff5aa4:;
-  { // ff5aa4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5aac;
-  }
-L_ff5aa8:;
-  { // ff5aa8: bra 
-    c.cycles += 8;
-    goto L_ff5ab0;
-  }
-L_ff5aac:;
-  { // ff5aac: ori.b #$c0, d5
-    c.cycles += 8;
-    uint32_t t5 = 0xc0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t5, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5ab0:;
-  { // ff5ab0: move.b d5, 48(a1)
-    c.cycles += 12;
-    uint32_t t6 = (c.d[5] & 0xffu);
-    uint32_t t7 = (c.a[1] + 48);
-    c.wr8(t7, t6);
-    c.logic<1>(t6);
-  }
-L_ff5ab4:;
-  { // ff5ab4: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t8 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t8) & 0xffu);
-    c.logic<1>(t8);
-  }
-L_ff5aba:;
-  { // ff5aba: addi.b #$b4, d4
-    c.cycles += 8;
-    uint32_t t9 = 0xb4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t9, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5abe:;
-  { // ff5abe: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t10 = c.rd8(c.a[2]); c.z = !((t10 >> 7) & 1);
-  }
-L_ff5ac2:;
-  { // ff5ac2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5abeu)) return; goto L_ff5abe; }
-  }
-L_ff5ac6:;
-  { // ff5ac6: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t11 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t11);
-    c.logic<1>(t11);
-  }
-L_ff5ac8:;
-  { // ff5ac8: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t12 = c.rd8(c.a[2]); c.z = !((t12 >> 7) & 1);
-  }
-L_ff5acc:;
-  { // ff5acc: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ac8u)) return; goto L_ff5ac8; }
-  }
-L_ff5ad0:;
-  { // ff5ad0: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t13 = (c.d[5] & 0xffu);
-    uint32_t t14 = (c.a[3] + 1);
-    c.wr8(t14, t13);
-    c.logic<1>(t13);
-  }
-L_ff5ad4:;
-  { // ff5ad4: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5a22(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5a22: goto L_ff5a22;
-    case 0xff5abe: goto L_ff5abe;
-    case 0xff5ac8: goto L_ff5ac8;
-    default: c.miss(pc); return;
-  }
-L_ff5a22:;
-  { // ff5a22: move.b 48(a1), d5
-    c.cycles += 12;
-    uint32_t t1 = (c.a[1] + 48);
-    uint32_t t2 = c.rd8(t1);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t2) & 0xffu);
-    c.logic<1>(t2);
-  }
-L_ff5a26:;
-  { // ff5a26: andi.b #$f0, d5
-    c.cycles += 8;
-    uint32_t t3 = 0xf0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_and<1>(t3, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a2a:;
-  { // ff5a2a: bra 
-    c.cycles += 8;
-    goto L_ff5a42;
-  }
-L_ff5a42:;
-  { // ff5a42: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 7) & 1);
-  }
-L_ff5a4a:;
-  { // ff5a4a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a4e:;
-  { // ff5a4e: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t5 = 0x4u;
-    c.cmp<1>(t5, (c.d[3] & 0xffu));
-  }
-L_ff5a52:;
-  { // ff5a52: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a62;
-  }
-L_ff5a56:;
-  { // ff5a56: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t6 = 0x5u;
-    c.cmp<1>(t6, (c.d[3] & 0xffu));
-  }
-L_ff5a5a:;
-  { // ff5a5a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a7e;
-  }
-L_ff5a5e:;
-  { // ff5a5e: bra 
-    c.cycles += 8;
-    goto L_ff5a9a;
-  }
-L_ff5a62:;
-  { // ff5a62: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 0) & 1);
-  }
-L_ff5a6a:;
-  { // ff5a6a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a6e:;
-  { // ff5a6e: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t8 = c.rd8(0xff7f24u); c.z = !((t8 >> 6) & 1);
-  }
-L_ff5a76:;
-  { // ff5a76: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a7a:;
-  { // ff5a7a: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a7e:;
-  { // ff5a7e: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t9 = c.rd8(0xff7f24u); c.z = !((t9 >> 1) & 1);
-  }
-L_ff5a86:;
-  { // ff5a86: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a8a:;
-  { // ff5a8a: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t10 = c.rd8(0xff7f24u); c.z = !((t10 >> 6) & 1);
-  }
-L_ff5a92:;
-  { // ff5a92: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a96:;
-  { // ff5a96: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a9a:;
-  { // ff5a9a: or.b d0, d5
-    c.cycles += 4;
-    uint32_t t11 = (c.d[0] & 0xffu);
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t11, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a9c:;
-  { // ff5a9c: btst.b #$3, $ff7f2a
-    c.cycles += 20;
-    uint32_t t12 = c.rd8(0xff7f2au); c.z = !((t12 >> 3) & 1);
-  }
-L_ff5aa4:;
-  { // ff5aa4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5aac;
-  }
-L_ff5aa8:;
-  { // ff5aa8: bra 
-    c.cycles += 8;
-    goto L_ff5ab0;
-  }
-L_ff5aac:;
-  { // ff5aac: ori.b #$c0, d5
-    c.cycles += 8;
-    uint32_t t13 = 0xc0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t13, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5ab0:;
-  { // ff5ab0: move.b d5, 48(a1)
-    c.cycles += 12;
-    uint32_t t14 = (c.d[5] & 0xffu);
-    uint32_t t15 = (c.a[1] + 48);
-    c.wr8(t15, t14);
-    c.logic<1>(t14);
-  }
-L_ff5ab4:;
-  { // ff5ab4: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t16 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t16) & 0xffu);
-    c.logic<1>(t16);
-  }
-L_ff5aba:;
-  { // ff5aba: addi.b #$b4, d4
-    c.cycles += 8;
-    uint32_t t17 = 0xb4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t17, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5abe:;
-  { // ff5abe: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t18 = c.rd8(c.a[2]); c.z = !((t18 >> 7) & 1);
-  }
-L_ff5ac2:;
-  { // ff5ac2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5abeu)) return; goto L_ff5abe; }
-  }
-L_ff5ac6:;
-  { // ff5ac6: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t19 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t19);
-    c.logic<1>(t19);
-  }
-L_ff5ac8:;
-  { // ff5ac8: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t20 = c.rd8(c.a[2]); c.z = !((t20 >> 7) & 1);
-  }
-L_ff5acc:;
-  { // ff5acc: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ac8u)) return; goto L_ff5ac8; }
-  }
-L_ff5ad0:;
-  { // ff5ad0: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t21 = (c.d[5] & 0xffu);
-    uint32_t t22 = (c.a[3] + 1);
-    c.wr8(t22, t21);
-    c.logic<1>(t21);
-  }
-L_ff5ad4:;
-  { // ff5ad4: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5a2e(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5a2e: goto L_ff5a2e;
-    case 0xff5abe: goto L_ff5abe;
-    case 0xff5ac8: goto L_ff5ac8;
-    default: c.miss(pc); return;
-  }
-L_ff5a2e:;
-  { // ff5a2e: move.b 48(a1), d5
-    c.cycles += 12;
-    uint32_t t1 = (c.a[1] + 48);
-    uint32_t t2 = c.rd8(t1);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t2) & 0xffu);
-    c.logic<1>(t2);
-  }
-L_ff5a32:;
-  { // ff5a32: andi.b #$cf, d5
-    c.cycles += 8;
-    uint32_t t3 = 0xcfu;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_and<1>(t3, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a36:;
-  { // ff5a36: bra 
-    c.cycles += 8;
-    goto L_ff5a42;
-  }
-L_ff5a42:;
-  { // ff5a42: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 7) & 1);
-  }
-L_ff5a4a:;
-  { // ff5a4a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a4e:;
-  { // ff5a4e: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t5 = 0x4u;
-    c.cmp<1>(t5, (c.d[3] & 0xffu));
-  }
-L_ff5a52:;
-  { // ff5a52: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a62;
-  }
-L_ff5a56:;
-  { // ff5a56: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t6 = 0x5u;
-    c.cmp<1>(t6, (c.d[3] & 0xffu));
-  }
-L_ff5a5a:;
-  { // ff5a5a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a7e;
-  }
-L_ff5a5e:;
-  { // ff5a5e: bra 
-    c.cycles += 8;
-    goto L_ff5a9a;
-  }
-L_ff5a62:;
-  { // ff5a62: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 0) & 1);
-  }
-L_ff5a6a:;
-  { // ff5a6a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a6e:;
-  { // ff5a6e: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t8 = c.rd8(0xff7f24u); c.z = !((t8 >> 6) & 1);
-  }
-L_ff5a76:;
-  { // ff5a76: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a7a:;
-  { // ff5a7a: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a7e:;
-  { // ff5a7e: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t9 = c.rd8(0xff7f24u); c.z = !((t9 >> 1) & 1);
-  }
-L_ff5a86:;
-  { // ff5a86: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a8a:;
-  { // ff5a8a: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t10 = c.rd8(0xff7f24u); c.z = !((t10 >> 6) & 1);
-  }
-L_ff5a92:;
-  { // ff5a92: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a96:;
-  { // ff5a96: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a9a:;
-  { // ff5a9a: or.b d0, d5
-    c.cycles += 4;
-    uint32_t t11 = (c.d[0] & 0xffu);
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t11, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a9c:;
-  { // ff5a9c: btst.b #$3, $ff7f2a
-    c.cycles += 20;
-    uint32_t t12 = c.rd8(0xff7f2au); c.z = !((t12 >> 3) & 1);
-  }
-L_ff5aa4:;
-  { // ff5aa4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5aac;
-  }
-L_ff5aa8:;
-  { // ff5aa8: bra 
-    c.cycles += 8;
-    goto L_ff5ab0;
-  }
-L_ff5aac:;
-  { // ff5aac: ori.b #$c0, d5
-    c.cycles += 8;
-    uint32_t t13 = 0xc0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t13, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5ab0:;
-  { // ff5ab0: move.b d5, 48(a1)
-    c.cycles += 12;
-    uint32_t t14 = (c.d[5] & 0xffu);
-    uint32_t t15 = (c.a[1] + 48);
-    c.wr8(t15, t14);
-    c.logic<1>(t14);
-  }
-L_ff5ab4:;
-  { // ff5ab4: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t16 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t16) & 0xffu);
-    c.logic<1>(t16);
-  }
-L_ff5aba:;
-  { // ff5aba: addi.b #$b4, d4
-    c.cycles += 8;
-    uint32_t t17 = 0xb4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t17, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5abe:;
-  { // ff5abe: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t18 = c.rd8(c.a[2]); c.z = !((t18 >> 7) & 1);
-  }
-L_ff5ac2:;
-  { // ff5ac2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5abeu)) return; goto L_ff5abe; }
-  }
-L_ff5ac6:;
-  { // ff5ac6: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t19 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t19);
-    c.logic<1>(t19);
-  }
-L_ff5ac8:;
-  { // ff5ac8: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t20 = c.rd8(c.a[2]); c.z = !((t20 >> 7) & 1);
-  }
-L_ff5acc:;
-  { // ff5acc: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ac8u)) return; goto L_ff5ac8; }
-  }
-L_ff5ad0:;
-  { // ff5ad0: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t21 = (c.d[5] & 0xffu);
-    uint32_t t22 = (c.a[3] + 1);
-    c.wr8(t22, t21);
-    c.logic<1>(t21);
-  }
-L_ff5ad4:;
-  { // ff5ad4: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5a3a(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5a3a: goto L_ff5a3a;
-    case 0xff5abe: goto L_ff5abe;
-    case 0xff5ac8: goto L_ff5ac8;
-    default: c.miss(pc); return;
-  }
-L_ff5a3a:;
-  { // ff5a3a: move.b 48(a1), d5
-    c.cycles += 12;
-    uint32_t t1 = (c.a[1] + 48);
-    uint32_t t2 = c.rd8(t1);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t2) & 0xffu);
-    c.logic<1>(t2);
-  }
-L_ff5a3e:;
-  { // ff5a3e: andi.b #$3f, d5
-    c.cycles += 8;
-    uint32_t t3 = 0x3fu;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_and<1>(t3, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a42:;
-  { // ff5a42: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 7) & 1);
-  }
-L_ff5a4a:;
-  { // ff5a4a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a4e:;
-  { // ff5a4e: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t5 = 0x4u;
-    c.cmp<1>(t5, (c.d[3] & 0xffu));
-  }
-L_ff5a52:;
-  { // ff5a52: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a62;
-  }
-L_ff5a56:;
-  { // ff5a56: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t6 = 0x5u;
-    c.cmp<1>(t6, (c.d[3] & 0xffu));
-  }
-L_ff5a5a:;
-  { // ff5a5a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a7e;
-  }
-L_ff5a5e:;
-  { // ff5a5e: bra 
-    c.cycles += 8;
-    goto L_ff5a9a;
-  }
-L_ff5a62:;
-  { // ff5a62: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 0) & 1);
-  }
-L_ff5a6a:;
-  { // ff5a6a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a6e:;
-  { // ff5a6e: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t8 = c.rd8(0xff7f24u); c.z = !((t8 >> 6) & 1);
-  }
-L_ff5a76:;
-  { // ff5a76: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a7a:;
-  { // ff5a7a: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a7e:;
-  { // ff5a7e: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t9 = c.rd8(0xff7f24u); c.z = !((t9 >> 1) & 1);
-  }
-L_ff5a86:;
-  { // ff5a86: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5a9a;
-  }
-L_ff5a8a:;
-  { // ff5a8a: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t10 = c.rd8(0xff7f24u); c.z = !((t10 >> 6) & 1);
-  }
-L_ff5a92:;
-  { // ff5a92: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5a9a;
-  }
-L_ff5a96:;
-  { // ff5a96: bra 
-    c.cycles += 8;
-    goto L_ff5ad4;
-  }
-L_ff5a9a:;
-  { // ff5a9a: or.b d0, d5
-    c.cycles += 4;
-    uint32_t t11 = (c.d[0] & 0xffu);
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t11, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5a9c:;
-  { // ff5a9c: btst.b #$3, $ff7f2a
-    c.cycles += 20;
-    uint32_t t12 = c.rd8(0xff7f2au); c.z = !((t12 >> 3) & 1);
-  }
-L_ff5aa4:;
-  { // ff5aa4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5aac;
-  }
-L_ff5aa8:;
-  { // ff5aa8: bra 
-    c.cycles += 8;
-    goto L_ff5ab0;
-  }
-L_ff5aac:;
-  { // ff5aac: ori.b #$c0, d5
-    c.cycles += 8;
-    uint32_t t13 = 0xc0u;
-    c.d[5] = (c.d[5] & ~0xffu) | ((c.logic_or<1>(t13, (c.d[5] & 0xffu))) & 0xffu);
-  }
-L_ff5ab0:;
-  { // ff5ab0: move.b d5, 48(a1)
-    c.cycles += 12;
-    uint32_t t14 = (c.d[5] & 0xffu);
-    uint32_t t15 = (c.a[1] + 48);
-    c.wr8(t15, t14);
-    c.logic<1>(t14);
-  }
-L_ff5ab4:;
-  { // ff5ab4: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t16 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t16) & 0xffu);
-    c.logic<1>(t16);
-  }
-L_ff5aba:;
-  { // ff5aba: addi.b #$b4, d4
-    c.cycles += 8;
-    uint32_t t17 = 0xb4u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t17, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5abe:;
-  { // ff5abe: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t18 = c.rd8(c.a[2]); c.z = !((t18 >> 7) & 1);
-  }
-L_ff5ac2:;
-  { // ff5ac2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5abeu)) return; goto L_ff5abe; }
-  }
-L_ff5ac6:;
-  { // ff5ac6: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t19 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t19);
-    c.logic<1>(t19);
-  }
-L_ff5ac8:;
-  { // ff5ac8: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t20 = c.rd8(c.a[2]); c.z = !((t20 >> 7) & 1);
-  }
-L_ff5acc:;
-  { // ff5acc: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ac8u)) return; goto L_ff5ac8; }
-  }
-L_ff5ad0:;
-  { // ff5ad0: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t21 = (c.d[5] & 0xffu);
-    uint32_t t22 = (c.a[3] + 1);
-    c.wr8(t22, t21);
-    c.logic<1>(t21);
-  }
-L_ff5ad4:;
-  { // ff5ad4: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5ad6(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5ad6: goto L_ff5ad6;
-    case 0xff5b60: goto L_ff5b60;
-    case 0xff5b8e: goto L_ff5b8e;
-    case 0xff5b9c: goto L_ff5b9c;
-    case 0xff5ba6: goto L_ff5ba6;
-    case 0xff5bb4: goto L_ff5bb4;
-    case 0xff5bce: goto L_ff5bce;
-    case 0xff5bdc: goto L_ff5bdc;
-    case 0xff5be6: goto L_ff5be6;
-    case 0xff5bf4: goto L_ff5bf4;
-    case 0xff5bfe: goto L_ff5bfe;
-    case 0xff5c0c: goto L_ff5c0c;
-    case 0xff5c16: goto L_ff5c16;
-    case 0xff5c24: goto L_ff5c24;
-    case 0xff5c38: goto L_ff5c38;
-    case 0xff5c46: goto L_ff5c46;
-    case 0xff5c50: goto L_ff5c50;
-    case 0xff5c5e: goto L_ff5c5e;
-    case 0xff5c78: goto L_ff5c78;
-    case 0xff5c86: goto L_ff5c86;
-    case 0xff5c90: goto L_ff5c90;
-    case 0xff5c9e: goto L_ff5c9e;
-    case 0xff5ca8: goto L_ff5ca8;
-    case 0xff5cb6: goto L_ff5cb6;
-    case 0xff5cc0: goto L_ff5cc0;
-    case 0xff5cce: goto L_ff5cce;
-    case 0xff5ce2: goto L_ff5ce2;
-    case 0xff5cf0: goto L_ff5cf0;
-    case 0xff5cfa: goto L_ff5cfa;
-    case 0xff5d08: goto L_ff5d08;
-    case 0xff5d22: goto L_ff5d22;
-    case 0xff5d30: goto L_ff5d30;
-    case 0xff5d3a: goto L_ff5d3a;
-    case 0xff5d48: goto L_ff5d48;
-    case 0xff5d52: goto L_ff5d52;
-    case 0xff5d60: goto L_ff5d60;
-    case 0xff5d6a: goto L_ff5d6a;
-    case 0xff5d78: goto L_ff5d78;
-    case 0xff5d8c: goto L_ff5d8c;
-    case 0xff5d9a: goto L_ff5d9a;
-    case 0xff5da4: goto L_ff5da4;
-    case 0xff5db2: goto L_ff5db2;
-    case 0xff5dcc: goto L_ff5dcc;
-    case 0xff5dda: goto L_ff5dda;
-    case 0xff5de4: goto L_ff5de4;
-    case 0xff5df2: goto L_ff5df2;
-    case 0xff5dfc: goto L_ff5dfc;
-    case 0xff5e0a: goto L_ff5e0a;
-    case 0xff5e14: goto L_ff5e14;
-    case 0xff5e22: goto L_ff5e22;
-    default: c.miss(pc); return;
-  }
-L_ff5ad6:;
-  { // ff5ad6: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 7) & 1);
-  }
-L_ff5ade:;
-  { // ff5ade: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5b2e;
-  }
-L_ff5ae2:;
-  { // ff5ae2: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t2 = 0x4u;
-    c.cmp<1>(t2, (c.d[3] & 0xffu));
-  }
-L_ff5ae6:;
-  { // ff5ae6: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5af6;
-  }
-L_ff5aea:;
-  { // ff5aea: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t3 = 0x5u;
-    c.cmp<1>(t3, (c.d[3] & 0xffu));
-  }
-L_ff5aee:;
-  { // ff5aee: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5b12;
-  }
-L_ff5af2:;
-  { // ff5af2: bra 
-    c.cycles += 8;
-    goto L_ff5b2e;
-  }
-L_ff5af6:;
-  { // ff5af6: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 0) & 1);
-  }
-L_ff5afe:;
-  { // ff5afe: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5b2e;
-  }
-L_ff5b02:;
-  { // ff5b02: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t5 = c.rd8(0xff7f24u); c.z = !((t5 >> 6) & 1);
-  }
-L_ff5b0a:;
-  { // ff5b0a: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5b2e;
-  }
-L_ff5b0e:;
-  { // ff5b0e: bra 
-    c.cycles += 8;
-    goto L_ff5e50;
-  }
-L_ff5b12:;
-  { // ff5b12: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t6 = c.rd8(0xff7f24u); c.z = !((t6 >> 1) & 1);
-  }
-L_ff5b1a:;
-  { // ff5b1a: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5b2e;
-  }
-L_ff5b1e:;
-  { // ff5b1e: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 6) & 1);
-  }
-L_ff5b26:;
-  { // ff5b26: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5b2e;
-  }
-L_ff5b2a:;
-  { // ff5b2a: bra 
-    c.cycles += 8;
-    goto L_ff5e50;
-  }
-L_ff5b2e:;
-  { // ff5b2e: add.w d0, d0
-    c.cycles += 4;
-    uint32_t t8 = (c.d[0] & 0xffffu);
-    c.d[0] = (c.d[0] & ~0xffffu) | ((c.add<2>(t8, (c.d[0] & 0xffffu))) & 0xffffu);
-  }
-L_ff5b30:;
-  { // ff5b30: add.w d0, d0
-    c.cycles += 4;
-    uint32_t t9 = (c.d[0] & 0xffffu);
-    c.d[0] = (c.d[0] & ~0xffffu) | ((c.add<2>(t9, (c.d[0] & 0xffffu))) & 0xffffu);
-  }
-L_ff5b32:;
-  { // ff5b32: lea.l $a00000, a6
-    c.cycles += 20;
-    c.a[6] = 0xa00000u;
-  }
-L_ff5b38:;
-  { // ff5b38: moveq.l #$0, d4
-    c.cycles += 4;
-    uint32_t t10 = 0x0u;
-    c.d[4] = t10;
-    c.logic<4>(t10);
-  }
-L_ff5b3a:;
-  { // ff5b3a: move.b 0(a6,d0.w), d4
-    c.cycles += 12;
-    uint32_t t11 = (c.a[6] + 0 + (uint32_t)(int16_t)c.d[0]);
-    uint32_t t12 = c.rd8(t11);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t12) & 0xffu);
-    c.logic<1>(t12);
-  }
-L_ff5b3e:;
-  { // ff5b3e: lsl.l #$8, d4
-    c.cycles += 4;
-    c.d[4] = c.lsl<4>(0x8u, c.d[4]);
-  }
-L_ff5b40:;
-  { // ff5b40: move.b 1(a6,d0.w), d4
-    c.cycles += 12;
-    uint32_t t13 = (c.a[6] + 1 + (uint32_t)(int16_t)c.d[0]);
-    uint32_t t14 = c.rd8(t13);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t14) & 0xffu);
-    c.logic<1>(t14);
-  }
-L_ff5b44:;
-  { // ff5b44: lsl.l #$8, d4
-    c.cycles += 4;
-    c.d[4] = c.lsl<4>(0x8u, c.d[4]);
-  }
-L_ff5b46:;
-  { // ff5b46: move.b 2(a6,d0.w), d4
-    c.cycles += 12;
-    uint32_t t15 = (c.a[6] + 2 + (uint32_t)(int16_t)c.d[0]);
-    uint32_t t16 = c.rd8(t15);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t16) & 0xffu);
-    c.logic<1>(t16);
-  }
-L_ff5b4a:;
-  { // ff5b4a: lsl.l #$8, d4
-    c.cycles += 4;
-    c.d[4] = c.lsl<4>(0x8u, c.d[4]);
-  }
-L_ff5b4c:;
-  { // ff5b4c: move.b 3(a6,d0.w), d4
-    c.cycles += 12;
-    uint32_t t17 = (c.a[6] + 3 + (uint32_t)(int16_t)c.d[0]);
-    uint32_t t18 = c.rd8(t17);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t18) & 0xffu);
-    c.logic<1>(t18);
-  }
-L_ff5b50:;
-  { // ff5b50: adda.l d4, a6
-    c.cycles += 4;
-    c.a[6] += c.d[4];
-  }
-L_ff5b52:;
-  { // ff5b52: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t19 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t19) & 0xffu);
-    c.logic<1>(t19);
-  }
-L_ff5b58:;
-  { // ff5b58: addi.b #$b0, d4
-    c.cycles += 8;
-    uint32_t t20 = 0xb0u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t20, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5b5c:;
-  { // ff5b5c: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t21 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t21);
-    c.logic<1>(t21);
-  }
-L_ff5b5e:;
-  { // ff5b5e: move.b (a6)+, d0
-    c.cycles += 8;
-    uint32_t t22 = c.a[6]; c.a[6] += 1;
-    uint32_t t23 = c.rd8(t22);
-    c.d[0] = (c.d[0] & ~0xffu) | ((t23) & 0xffu);
-    c.logic<1>(t23);
-  }
-L_ff5b60:;
-  { // ff5b60: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t24 = c.rd8(c.a[2]); c.z = !((t24 >> 7) & 1);
-  }
-L_ff5b64:;
-  { // ff5b64: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5b60u)) return; goto L_ff5b60; }
-  }
-L_ff5b68:;
-  { // ff5b68: move.b d0, 1(a3)
-    c.cycles += 12;
-    uint32_t t25 = (c.d[0] & 0xffu);
-    uint32_t t26 = (c.a[3] + 1);
-    c.wr8(t26, t25);
-    c.logic<1>(t25);
-  }
-L_ff5b6c:;
-  { // ff5b6c: andi.w #$7, d0
-    c.cycles += 8;
-    uint32_t t27 = 0x7u;
-    c.d[0] = (c.d[0] & ~0xffffu) | ((c.logic_and<2>(t27, (c.d[0] & 0xffffu))) & 0xffffu);
-  }
-L_ff5b70:;
-  { // ff5b70: move.b d0, 37(a1)
-    c.cycles += 12;
-    uint32_t t28 = (c.d[0] & 0xffu);
-    uint32_t t29 = (c.a[1] + 37);
-    c.wr8(t29, t28);
-    c.logic<1>(t28);
-  }
-L_ff5b74:;
-  { // ff5b74: lea.l $ffff5e52, a4
-    c.cycles += 20;
-    c.a[4] = 0xffff5e52u;
-  }
-L_ff5b7a:;
-  { // ff5b7a: move.b 0(a4,d0.w), d0
-    c.cycles += 12;
-    uint32_t t30 = (c.a[4] + 0 + (uint32_t)(int16_t)c.d[0]);
-    uint32_t t31 = c.rd8(t30);
-    c.d[0] = (c.d[0] & ~0xffu) | ((t31) & 0xffu);
-    c.logic<1>(t31);
-  }
-L_ff5b7e:;
-  { // ff5b7e: lsr.b #$4, d0
-    c.cycles += 4;
-    c.d[0] = (c.d[0] & ~0xffu) | ((c.lsr<1>(0x4u, (c.d[0] & 0xffu))) & 0xffu);
-  }
-L_ff5b80:;
-  { // ff5b80: movea.l a3, a4
-    c.cycles += 4;
-    c.a[4] = c.a[3];
-  }
-L_ff5b82:;
-  { // ff5b82: addq.l #$1, a4
-    c.cycles += 4;
-    c.a[4] += 0x1u;
-  }
-L_ff5b84:;
-  { // ff5b84: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t32 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t32) & 0xffu);
-    c.logic<1>(t32);
-  }
-L_ff5b8a:;
-  { // ff5b8a: addi.b #$30, d4
-    c.cycles += 8;
-    uint32_t t33 = 0x30u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t33, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5b8e:;
-  { // ff5b8e: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t34 = c.rd8(c.a[2]); c.z = !((t34 >> 7) & 1);
-  }
-L_ff5b92:;
-  { // ff5b92: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5b8eu)) return; goto L_ff5b8e; }
-  }
-L_ff5b96:;
-  { // ff5b96: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t35 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t35);
-    c.logic<1>(t35);
-  }
-L_ff5b98:;
-  { // ff5b98: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t36 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t36, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5b9c:;
-  { // ff5b9c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t37 = c.rd8(c.a[2]); c.z = !((t37 >> 7) & 1);
-  }
-L_ff5ba0:;
-  { // ff5ba0: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5b9cu)) return; goto L_ff5b9c; }
-  }
-L_ff5ba4:;
-  { // ff5ba4: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t38 = c.a[6]; c.a[6] += 1;
-    uint32_t t39 = c.rd8(t38);
-    c.wr8(c.a[4], t39);
-    c.logic<1>(t39);
-  }
-L_ff5ba6:;
-  { // ff5ba6: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t40 = c.rd8(c.a[2]); c.z = !((t40 >> 7) & 1);
-  }
-L_ff5baa:;
-  { // ff5baa: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ba6u)) return; goto L_ff5ba6; }
-  }
-L_ff5bae:;
-  { // ff5bae: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t41 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t41);
-    c.logic<1>(t41);
-  }
-L_ff5bb0:;
-  { // ff5bb0: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t42 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t42, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5bb4:;
-  { // ff5bb4: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t43 = c.rd8(c.a[2]); c.z = !((t43 >> 7) & 1);
-  }
-L_ff5bb8:;
-  { // ff5bb8: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5bb4u)) return; goto L_ff5bb4; }
-  }
-L_ff5bbc:;
-  { // ff5bbc: move.b (a6)+, d6
-    c.cycles += 8;
-    uint32_t t44 = c.a[6]; c.a[6] += 1;
-    uint32_t t45 = c.rd8(t44);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t45) & 0xffu);
-    c.logic<1>(t45);
-  }
-L_ff5bbe:;
-  { // ff5bbe: move.b d6, 38(a1)
-    c.cycles += 12;
-    uint32_t t46 = (c.d[6] & 0xffu);
-    uint32_t t47 = (c.a[1] + 38);
-    c.wr8(t47, t46);
-    c.logic<1>(t46);
-  }
-L_ff5bc2:;
-  { // ff5bc2: asr.b #$1, d0
-    c.cycles += 4;
-    c.d[0] = (c.d[0] & ~0xffu) | ((c.asr<1>(0x1u, (c.d[0] & 0xffu))) & 0xffu);
-  }
-L_ff5bc4:;
-  { // ff5bc4: bcc 
-    c.cycles += 8;
-    if (c.cond_cc()) goto L_ff5bcc;
-  }
-L_ff5bc8:;
-  { // ff5bc8: move.b #$ff, d6
-    c.cycles += 8;
-    uint32_t t48 = 0xffu;
-    c.d[6] = (c.d[6] & ~0xffu) | ((t48) & 0xffu);
-    c.logic<1>(t48);
-  }
-L_ff5bcc:;
-  { // ff5bcc: move.b d6, (a4)
-    c.cycles += 8;
-    uint32_t t49 = (c.d[6] & 0xffu);
-    c.wr8(c.a[4], t49);
-    c.logic<1>(t49);
-  }
-L_ff5bce:;
-  { // ff5bce: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t50 = c.rd8(c.a[2]); c.z = !((t50 >> 7) & 1);
-  }
-L_ff5bd2:;
-  { // ff5bd2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5bceu)) return; goto L_ff5bce; }
-  }
-L_ff5bd6:;
-  { // ff5bd6: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t51 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t51);
-    c.logic<1>(t51);
-  }
-L_ff5bd8:;
-  { // ff5bd8: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t52 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t52, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5bdc:;
-  { // ff5bdc: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t53 = c.rd8(c.a[2]); c.z = !((t53 >> 7) & 1);
-  }
-L_ff5be0:;
-  { // ff5be0: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5bdcu)) return; goto L_ff5bdc; }
-  }
-L_ff5be4:;
-  { // ff5be4: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t54 = c.a[6]; c.a[6] += 1;
-    uint32_t t55 = c.rd8(t54);
-    c.wr8(c.a[4], t55);
-    c.logic<1>(t55);
-  }
-L_ff5be6:;
-  { // ff5be6: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t56 = c.rd8(c.a[2]); c.z = !((t56 >> 7) & 1);
-  }
-L_ff5bea:;
-  { // ff5bea: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5be6u)) return; goto L_ff5be6; }
-  }
-L_ff5bee:;
-  { // ff5bee: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t57 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t57);
-    c.logic<1>(t57);
-  }
-L_ff5bf0:;
-  { // ff5bf0: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t58 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t58, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5bf4:;
-  { // ff5bf4: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t59 = c.rd8(c.a[2]); c.z = !((t59 >> 7) & 1);
-  }
-L_ff5bf8:;
-  { // ff5bf8: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5bf4u)) return; goto L_ff5bf4; }
-  }
-L_ff5bfc:;
-  { // ff5bfc: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t60 = c.a[6]; c.a[6] += 1;
-    uint32_t t61 = c.rd8(t60);
-    c.wr8(c.a[4], t61);
-    c.logic<1>(t61);
-  }
-L_ff5bfe:;
-  { // ff5bfe: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t62 = c.rd8(c.a[2]); c.z = !((t62 >> 7) & 1);
-  }
-L_ff5c02:;
-  { // ff5c02: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5bfeu)) return; goto L_ff5bfe; }
-  }
-L_ff5c06:;
-  { // ff5c06: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t63 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t63);
-    c.logic<1>(t63);
-  }
-L_ff5c08:;
-  { // ff5c08: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t64 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t64, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c0c:;
-  { // ff5c0c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t65 = c.rd8(c.a[2]); c.z = !((t65 >> 7) & 1);
-  }
-L_ff5c10:;
-  { // ff5c10: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c0cu)) return; goto L_ff5c0c; }
-  }
-L_ff5c14:;
-  { // ff5c14: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t66 = c.a[6]; c.a[6] += 1;
-    uint32_t t67 = c.rd8(t66);
-    c.wr8(c.a[4], t67);
-    c.logic<1>(t67);
-  }
-L_ff5c16:;
-  { // ff5c16: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t68 = c.rd8(c.a[2]); c.z = !((t68 >> 7) & 1);
-  }
-L_ff5c1a:;
-  { // ff5c1a: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c16u)) return; goto L_ff5c16; }
-  }
-L_ff5c1e:;
-  { // ff5c1e: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t69 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t69);
-    c.logic<1>(t69);
-  }
-L_ff5c20:;
-  { // ff5c20: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t70 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t70, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c24:;
-  { // ff5c24: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t71 = c.rd8(c.a[2]); c.z = !((t71 >> 7) & 1);
-  }
-L_ff5c28:;
-  { // ff5c28: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c24u)) return; goto L_ff5c24; }
-  }
-L_ff5c2c:;
-  { // ff5c2c: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t72 = c.a[6]; c.a[6] += 1;
-    uint32_t t73 = c.rd8(t72);
-    c.wr8(c.a[4], t73);
-    c.logic<1>(t73);
-  }
-L_ff5c2e:;
-  { // ff5c2e: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t74 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t74) & 0xffu);
-    c.logic<1>(t74);
-  }
-L_ff5c34:;
-  { // ff5c34: addi.b #$38, d4
-    c.cycles += 8;
-    uint32_t t75 = 0x38u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t75, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c38:;
-  { // ff5c38: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t76 = c.rd8(c.a[2]); c.z = !((t76 >> 7) & 1);
-  }
-L_ff5c3c:;
-  { // ff5c3c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c38u)) return; goto L_ff5c38; }
-  }
-L_ff5c40:;
-  { // ff5c40: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t77 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t77);
-    c.logic<1>(t77);
-  }
-L_ff5c42:;
-  { // ff5c42: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t78 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t78, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c46:;
-  { // ff5c46: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t79 = c.rd8(c.a[2]); c.z = !((t79 >> 7) & 1);
-  }
-L_ff5c4a:;
-  { // ff5c4a: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c46u)) return; goto L_ff5c46; }
-  }
-L_ff5c4e:;
-  { // ff5c4e: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t80 = c.a[6]; c.a[6] += 1;
-    uint32_t t81 = c.rd8(t80);
-    c.wr8(c.a[4], t81);
-    c.logic<1>(t81);
-  }
-L_ff5c50:;
-  { // ff5c50: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t82 = c.rd8(c.a[2]); c.z = !((t82 >> 7) & 1);
-  }
-L_ff5c54:;
-  { // ff5c54: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c50u)) return; goto L_ff5c50; }
-  }
-L_ff5c58:;
-  { // ff5c58: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t83 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t83);
-    c.logic<1>(t83);
-  }
-L_ff5c5a:;
-  { // ff5c5a: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t84 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t84, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c5e:;
-  { // ff5c5e: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t85 = c.rd8(c.a[2]); c.z = !((t85 >> 7) & 1);
-  }
-L_ff5c62:;
-  { // ff5c62: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c5eu)) return; goto L_ff5c5e; }
-  }
-L_ff5c66:;
-  { // ff5c66: move.b (a6)+, d6
-    c.cycles += 8;
-    uint32_t t86 = c.a[6]; c.a[6] += 1;
-    uint32_t t87 = c.rd8(t86);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t87) & 0xffu);
-    c.logic<1>(t87);
-  }
-L_ff5c68:;
-  { // ff5c68: move.b d6, 39(a1)
-    c.cycles += 12;
-    uint32_t t88 = (c.d[6] & 0xffu);
-    uint32_t t89 = (c.a[1] + 39);
-    c.wr8(t89, t88);
-    c.logic<1>(t88);
-  }
-L_ff5c6c:;
-  { // ff5c6c: asr.b #$1, d0
-    c.cycles += 4;
-    c.d[0] = (c.d[0] & ~0xffu) | ((c.asr<1>(0x1u, (c.d[0] & 0xffu))) & 0xffu);
-  }
-L_ff5c6e:;
-  { // ff5c6e: bcc 
-    c.cycles += 8;
-    if (c.cond_cc()) goto L_ff5c76;
-  }
-L_ff5c72:;
-  { // ff5c72: move.b #$ff, d6
-    c.cycles += 8;
-    uint32_t t90 = 0xffu;
-    c.d[6] = (c.d[6] & ~0xffu) | ((t90) & 0xffu);
-    c.logic<1>(t90);
-  }
-L_ff5c76:;
-  { // ff5c76: move.b d6, (a4)
-    c.cycles += 8;
-    uint32_t t91 = (c.d[6] & 0xffu);
-    c.wr8(c.a[4], t91);
-    c.logic<1>(t91);
-  }
-L_ff5c78:;
-  { // ff5c78: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t92 = c.rd8(c.a[2]); c.z = !((t92 >> 7) & 1);
-  }
-L_ff5c7c:;
-  { // ff5c7c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c78u)) return; goto L_ff5c78; }
-  }
-L_ff5c80:;
-  { // ff5c80: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t93 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t93);
-    c.logic<1>(t93);
-  }
-L_ff5c82:;
-  { // ff5c82: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t94 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t94, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c86:;
-  { // ff5c86: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t95 = c.rd8(c.a[2]); c.z = !((t95 >> 7) & 1);
-  }
-L_ff5c8a:;
-  { // ff5c8a: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c86u)) return; goto L_ff5c86; }
-  }
-L_ff5c8e:;
-  { // ff5c8e: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t96 = c.a[6]; c.a[6] += 1;
-    uint32_t t97 = c.rd8(t96);
-    c.wr8(c.a[4], t97);
-    c.logic<1>(t97);
-  }
-L_ff5c90:;
-  { // ff5c90: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t98 = c.rd8(c.a[2]); c.z = !((t98 >> 7) & 1);
-  }
-L_ff5c94:;
-  { // ff5c94: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c90u)) return; goto L_ff5c90; }
-  }
-L_ff5c98:;
-  { // ff5c98: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t99 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t99);
-    c.logic<1>(t99);
-  }
-L_ff5c9a:;
-  { // ff5c9a: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t100 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t100, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5c9e:;
-  { // ff5c9e: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t101 = c.rd8(c.a[2]); c.z = !((t101 >> 7) & 1);
-  }
-L_ff5ca2:;
-  { // ff5ca2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5c9eu)) return; goto L_ff5c9e; }
-  }
-L_ff5ca6:;
-  { // ff5ca6: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t102 = c.a[6]; c.a[6] += 1;
-    uint32_t t103 = c.rd8(t102);
-    c.wr8(c.a[4], t103);
-    c.logic<1>(t103);
-  }
-L_ff5ca8:;
-  { // ff5ca8: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t104 = c.rd8(c.a[2]); c.z = !((t104 >> 7) & 1);
-  }
-L_ff5cac:;
-  { // ff5cac: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ca8u)) return; goto L_ff5ca8; }
-  }
-L_ff5cb0:;
-  { // ff5cb0: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t105 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t105);
-    c.logic<1>(t105);
-  }
-L_ff5cb2:;
-  { // ff5cb2: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t106 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t106, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5cb6:;
-  { // ff5cb6: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t107 = c.rd8(c.a[2]); c.z = !((t107 >> 7) & 1);
-  }
-L_ff5cba:;
-  { // ff5cba: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5cb6u)) return; goto L_ff5cb6; }
-  }
-L_ff5cbe:;
-  { // ff5cbe: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t108 = c.a[6]; c.a[6] += 1;
-    uint32_t t109 = c.rd8(t108);
-    c.wr8(c.a[4], t109);
-    c.logic<1>(t109);
-  }
-L_ff5cc0:;
-  { // ff5cc0: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t110 = c.rd8(c.a[2]); c.z = !((t110 >> 7) & 1);
-  }
-L_ff5cc4:;
-  { // ff5cc4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5cc0u)) return; goto L_ff5cc0; }
-  }
-L_ff5cc8:;
-  { // ff5cc8: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t111 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t111);
-    c.logic<1>(t111);
-  }
-L_ff5cca:;
-  { // ff5cca: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t112 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t112, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5cce:;
-  { // ff5cce: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t113 = c.rd8(c.a[2]); c.z = !((t113 >> 7) & 1);
-  }
-L_ff5cd2:;
-  { // ff5cd2: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5cceu)) return; goto L_ff5cce; }
-  }
-L_ff5cd6:;
-  { // ff5cd6: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t114 = c.a[6]; c.a[6] += 1;
-    uint32_t t115 = c.rd8(t114);
-    c.wr8(c.a[4], t115);
-    c.logic<1>(t115);
-  }
-L_ff5cd8:;
-  { // ff5cd8: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t116 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t116) & 0xffu);
-    c.logic<1>(t116);
-  }
-L_ff5cde:;
-  { // ff5cde: addi.b #$34, d4
-    c.cycles += 8;
-    uint32_t t117 = 0x34u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t117, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5ce2:;
-  { // ff5ce2: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t118 = c.rd8(c.a[2]); c.z = !((t118 >> 7) & 1);
-  }
-L_ff5ce6:;
-  { // ff5ce6: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ce2u)) return; goto L_ff5ce2; }
-  }
-L_ff5cea:;
-  { // ff5cea: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t119 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t119);
-    c.logic<1>(t119);
-  }
-L_ff5cec:;
-  { // ff5cec: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t120 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t120, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5cf0:;
-  { // ff5cf0: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t121 = c.rd8(c.a[2]); c.z = !((t121 >> 7) & 1);
-  }
-L_ff5cf4:;
-  { // ff5cf4: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5cf0u)) return; goto L_ff5cf0; }
-  }
-L_ff5cf8:;
-  { // ff5cf8: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t122 = c.a[6]; c.a[6] += 1;
-    uint32_t t123 = c.rd8(t122);
-    c.wr8(c.a[4], t123);
-    c.logic<1>(t123);
-  }
-L_ff5cfa:;
-  { // ff5cfa: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t124 = c.rd8(c.a[2]); c.z = !((t124 >> 7) & 1);
-  }
-L_ff5cfe:;
-  { // ff5cfe: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5cfau)) return; goto L_ff5cfa; }
-  }
-L_ff5d02:;
-  { // ff5d02: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t125 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t125);
-    c.logic<1>(t125);
-  }
-L_ff5d04:;
-  { // ff5d04: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t126 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t126, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d08:;
-  { // ff5d08: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t127 = c.rd8(c.a[2]); c.z = !((t127 >> 7) & 1);
-  }
-L_ff5d0c:;
-  { // ff5d0c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d08u)) return; goto L_ff5d08; }
-  }
-L_ff5d10:;
-  { // ff5d10: move.b (a6)+, d6
-    c.cycles += 8;
-    uint32_t t128 = c.a[6]; c.a[6] += 1;
-    uint32_t t129 = c.rd8(t128);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t129) & 0xffu);
-    c.logic<1>(t129);
-  }
-L_ff5d12:;
-  { // ff5d12: move.b d6, 40(a1)
-    c.cycles += 12;
-    uint32_t t130 = (c.d[6] & 0xffu);
-    uint32_t t131 = (c.a[1] + 40);
-    c.wr8(t131, t130);
-    c.logic<1>(t130);
-  }
-L_ff5d16:;
-  { // ff5d16: asr.b #$1, d0
-    c.cycles += 4;
-    c.d[0] = (c.d[0] & ~0xffu) | ((c.asr<1>(0x1u, (c.d[0] & 0xffu))) & 0xffu);
-  }
-L_ff5d18:;
-  { // ff5d18: bcc 
-    c.cycles += 8;
-    if (c.cond_cc()) goto L_ff5d20;
-  }
-L_ff5d1c:;
-  { // ff5d1c: move.b #$ff, d6
-    c.cycles += 8;
-    uint32_t t132 = 0xffu;
-    c.d[6] = (c.d[6] & ~0xffu) | ((t132) & 0xffu);
-    c.logic<1>(t132);
-  }
-L_ff5d20:;
-  { // ff5d20: move.b d6, (a4)
-    c.cycles += 8;
-    uint32_t t133 = (c.d[6] & 0xffu);
-    c.wr8(c.a[4], t133);
-    c.logic<1>(t133);
-  }
-L_ff5d22:;
-  { // ff5d22: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t134 = c.rd8(c.a[2]); c.z = !((t134 >> 7) & 1);
-  }
-L_ff5d26:;
-  { // ff5d26: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d22u)) return; goto L_ff5d22; }
-  }
-L_ff5d2a:;
-  { // ff5d2a: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t135 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t135);
-    c.logic<1>(t135);
-  }
-L_ff5d2c:;
-  { // ff5d2c: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t136 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t136, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d30:;
-  { // ff5d30: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t137 = c.rd8(c.a[2]); c.z = !((t137 >> 7) & 1);
-  }
-L_ff5d34:;
-  { // ff5d34: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d30u)) return; goto L_ff5d30; }
-  }
-L_ff5d38:;
-  { // ff5d38: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t138 = c.a[6]; c.a[6] += 1;
-    uint32_t t139 = c.rd8(t138);
-    c.wr8(c.a[4], t139);
-    c.logic<1>(t139);
-  }
-L_ff5d3a:;
-  { // ff5d3a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t140 = c.rd8(c.a[2]); c.z = !((t140 >> 7) & 1);
-  }
-L_ff5d3e:;
-  { // ff5d3e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d3au)) return; goto L_ff5d3a; }
-  }
-L_ff5d42:;
-  { // ff5d42: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t141 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t141);
-    c.logic<1>(t141);
-  }
-L_ff5d44:;
-  { // ff5d44: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t142 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t142, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d48:;
-  { // ff5d48: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t143 = c.rd8(c.a[2]); c.z = !((t143 >> 7) & 1);
-  }
-L_ff5d4c:;
-  { // ff5d4c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d48u)) return; goto L_ff5d48; }
-  }
-L_ff5d50:;
-  { // ff5d50: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t144 = c.a[6]; c.a[6] += 1;
-    uint32_t t145 = c.rd8(t144);
-    c.wr8(c.a[4], t145);
-    c.logic<1>(t145);
-  }
-L_ff5d52:;
-  { // ff5d52: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t146 = c.rd8(c.a[2]); c.z = !((t146 >> 7) & 1);
-  }
-L_ff5d56:;
-  { // ff5d56: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d52u)) return; goto L_ff5d52; }
-  }
-L_ff5d5a:;
-  { // ff5d5a: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t147 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t147);
-    c.logic<1>(t147);
-  }
-L_ff5d5c:;
-  { // ff5d5c: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t148 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t148, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d60:;
-  { // ff5d60: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t149 = c.rd8(c.a[2]); c.z = !((t149 >> 7) & 1);
-  }
-L_ff5d64:;
-  { // ff5d64: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d60u)) return; goto L_ff5d60; }
-  }
-L_ff5d68:;
-  { // ff5d68: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t150 = c.a[6]; c.a[6] += 1;
-    uint32_t t151 = c.rd8(t150);
-    c.wr8(c.a[4], t151);
-    c.logic<1>(t151);
-  }
-L_ff5d6a:;
-  { // ff5d6a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t152 = c.rd8(c.a[2]); c.z = !((t152 >> 7) & 1);
-  }
-L_ff5d6e:;
-  { // ff5d6e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d6au)) return; goto L_ff5d6a; }
-  }
-L_ff5d72:;
-  { // ff5d72: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t153 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t153);
-    c.logic<1>(t153);
-  }
-L_ff5d74:;
-  { // ff5d74: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t154 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t154, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d78:;
-  { // ff5d78: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t155 = c.rd8(c.a[2]); c.z = !((t155 >> 7) & 1);
-  }
-L_ff5d7c:;
-  { // ff5d7c: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d78u)) return; goto L_ff5d78; }
-  }
-L_ff5d80:;
-  { // ff5d80: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t156 = c.a[6]; c.a[6] += 1;
-    uint32_t t157 = c.rd8(t156);
-    c.wr8(c.a[4], t157);
-    c.logic<1>(t157);
-  }
-L_ff5d82:;
-  { // ff5d82: move.b $ff7f2d, d4
-    c.cycles += 16;
-    uint32_t t158 = c.rd8(0xff7f2du);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t158) & 0xffu);
-    c.logic<1>(t158);
-  }
-L_ff5d88:;
-  { // ff5d88: addi.b #$3c, d4
-    c.cycles += 8;
-    uint32_t t159 = 0x3cu;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t159, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d8c:;
-  { // ff5d8c: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t160 = c.rd8(c.a[2]); c.z = !((t160 >> 7) & 1);
-  }
-L_ff5d90:;
-  { // ff5d90: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d8cu)) return; goto L_ff5d8c; }
-  }
-L_ff5d94:;
-  { // ff5d94: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t161 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t161);
-    c.logic<1>(t161);
-  }
-L_ff5d96:;
-  { // ff5d96: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t162 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t162, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5d9a:;
-  { // ff5d9a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t163 = c.rd8(c.a[2]); c.z = !((t163 >> 7) & 1);
-  }
-L_ff5d9e:;
-  { // ff5d9e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5d9au)) return; goto L_ff5d9a; }
-  }
-L_ff5da2:;
-  { // ff5da2: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t164 = c.a[6]; c.a[6] += 1;
-    uint32_t t165 = c.rd8(t164);
-    c.wr8(c.a[4], t165);
-    c.logic<1>(t165);
-  }
-L_ff5da4:;
-  { // ff5da4: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t166 = c.rd8(c.a[2]); c.z = !((t166 >> 7) & 1);
-  }
-L_ff5da8:;
-  { // ff5da8: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5da4u)) return; goto L_ff5da4; }
-  }
-L_ff5dac:;
-  { // ff5dac: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t167 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t167);
-    c.logic<1>(t167);
-  }
-L_ff5dae:;
-  { // ff5dae: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t168 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t168, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5db2:;
-  { // ff5db2: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t169 = c.rd8(c.a[2]); c.z = !((t169 >> 7) & 1);
-  }
-L_ff5db6:;
-  { // ff5db6: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5db2u)) return; goto L_ff5db2; }
-  }
-L_ff5dba:;
-  { // ff5dba: move.b (a6)+, d6
-    c.cycles += 8;
-    uint32_t t170 = c.a[6]; c.a[6] += 1;
-    uint32_t t171 = c.rd8(t170);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t171) & 0xffu);
-    c.logic<1>(t171);
-  }
-L_ff5dbc:;
-  { // ff5dbc: move.b d6, 41(a1)
-    c.cycles += 12;
-    uint32_t t172 = (c.d[6] & 0xffu);
-    uint32_t t173 = (c.a[1] + 41);
-    c.wr8(t173, t172);
-    c.logic<1>(t172);
-  }
-L_ff5dc0:;
-  { // ff5dc0: asr.b #$1, d0
-    c.cycles += 4;
-    c.d[0] = (c.d[0] & ~0xffu) | ((c.asr<1>(0x1u, (c.d[0] & 0xffu))) & 0xffu);
-  }
-L_ff5dc2:;
-  { // ff5dc2: bcc 
-    c.cycles += 8;
-    if (c.cond_cc()) goto L_ff5dca;
-  }
-L_ff5dc6:;
-  { // ff5dc6: move.b #$ff, d6
-    c.cycles += 8;
-    uint32_t t174 = 0xffu;
-    c.d[6] = (c.d[6] & ~0xffu) | ((t174) & 0xffu);
-    c.logic<1>(t174);
-  }
-L_ff5dca:;
-  { // ff5dca: move.b d6, (a4)
-    c.cycles += 8;
-    uint32_t t175 = (c.d[6] & 0xffu);
-    c.wr8(c.a[4], t175);
-    c.logic<1>(t175);
-  }
-L_ff5dcc:;
-  { // ff5dcc: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t176 = c.rd8(c.a[2]); c.z = !((t176 >> 7) & 1);
-  }
-L_ff5dd0:;
-  { // ff5dd0: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5dccu)) return; goto L_ff5dcc; }
-  }
-L_ff5dd4:;
-  { // ff5dd4: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t177 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t177);
-    c.logic<1>(t177);
-  }
-L_ff5dd6:;
-  { // ff5dd6: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t178 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t178, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5dda:;
-  { // ff5dda: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t179 = c.rd8(c.a[2]); c.z = !((t179 >> 7) & 1);
-  }
-L_ff5dde:;
-  { // ff5dde: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ddau)) return; goto L_ff5dda; }
-  }
-L_ff5de2:;
-  { // ff5de2: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t180 = c.a[6]; c.a[6] += 1;
-    uint32_t t181 = c.rd8(t180);
-    c.wr8(c.a[4], t181);
-    c.logic<1>(t181);
-  }
-L_ff5de4:;
-  { // ff5de4: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t182 = c.rd8(c.a[2]); c.z = !((t182 >> 7) & 1);
-  }
-L_ff5de8:;
-  { // ff5de8: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5de4u)) return; goto L_ff5de4; }
-  }
-L_ff5dec:;
-  { // ff5dec: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t183 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t183);
-    c.logic<1>(t183);
-  }
-L_ff5dee:;
-  { // ff5dee: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t184 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t184, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5df2:;
-  { // ff5df2: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t185 = c.rd8(c.a[2]); c.z = !((t185 >> 7) & 1);
-  }
-L_ff5df6:;
-  { // ff5df6: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5df2u)) return; goto L_ff5df2; }
-  }
-L_ff5dfa:;
-  { // ff5dfa: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t186 = c.a[6]; c.a[6] += 1;
-    uint32_t t187 = c.rd8(t186);
-    c.wr8(c.a[4], t187);
-    c.logic<1>(t187);
-  }
-L_ff5dfc:;
-  { // ff5dfc: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t188 = c.rd8(c.a[2]); c.z = !((t188 >> 7) & 1);
-  }
-L_ff5e00:;
-  { // ff5e00: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5dfcu)) return; goto L_ff5dfc; }
-  }
-L_ff5e04:;
-  { // ff5e04: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t189 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t189);
-    c.logic<1>(t189);
-  }
-L_ff5e06:;
-  { // ff5e06: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t190 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t190, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5e0a:;
-  { // ff5e0a: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t191 = c.rd8(c.a[2]); c.z = !((t191 >> 7) & 1);
-  }
-L_ff5e0e:;
-  { // ff5e0e: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5e0au)) return; goto L_ff5e0a; }
-  }
-L_ff5e12:;
-  { // ff5e12: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t192 = c.a[6]; c.a[6] += 1;
-    uint32_t t193 = c.rd8(t192);
-    c.wr8(c.a[4], t193);
-    c.logic<1>(t193);
-  }
-L_ff5e14:;
-  { // ff5e14: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t194 = c.rd8(c.a[2]); c.z = !((t194 >> 7) & 1);
-  }
-L_ff5e18:;
-  { // ff5e18: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5e14u)) return; goto L_ff5e14; }
-  }
-L_ff5e1c:;
-  { // ff5e1c: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t195 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t195);
-    c.logic<1>(t195);
-  }
-L_ff5e1e:;
-  { // ff5e1e: addi.b #$10, d4
-    c.cycles += 8;
-    uint32_t t196 = 0x10u;
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t196, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5e22:;
-  { // ff5e22: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t197 = c.rd8(c.a[2]); c.z = !((t197 >> 7) & 1);
-  }
-L_ff5e26:;
-  { // ff5e26: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5e22u)) return; goto L_ff5e22; }
-  }
-L_ff5e2a:;
-  { // ff5e2a: move.b (a6)+, (a4)
-    c.cycles += 12;
-    uint32_t t198 = c.a[6]; c.a[6] += 1;
-    uint32_t t199 = c.rd8(t198);
-    c.wr8(c.a[4], t199);
-    c.logic<1>(t199);
-  }
-  { c.jump(0xff5e2cu); return; }
-L_ff5e50:;
-  { // ff5e50: rts 
-    c.cycles += 16;
-    c.ret = c.pop32(); return;
-  }
-}
-
-void ip_ff5e2c(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5e2c: goto L_ff5e2c;
-    default: c.miss(pc); return;
-  }
-L_ff5e2c:;
-  { // ff5e2c: btst.b #$5, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 5) & 1);
-  }
-L_ff5e34:;
-  { // ff5e34: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5e48;
-  }
-L_ff5e38:;
-  { // ff5e38: move.b #$c0, d0
-    c.cycles += 8;
-    uint32_t t2 = 0xc0u;
-    c.d[0] = (c.d[0] & ~0xffu) | ((t2) & 0xffu);
-    c.logic<1>(t2);
-  }
-L_ff5e3c:;
-  { // ff5e3c: move.b d0, 23(a1)
-    c.cycles += 12;
-    uint32_t t3 = (c.d[0] & 0xffu);
-    uint32_t t4 = (c.a[1] + 23);
-    c.wr8(t4, t3);
-    c.logic<1>(t3);
-  }
-L_ff5e40:;
-  { // ff5e40: clr.b 22(a1)
-    c.cycles += 12;
-    uint32_t t5 = (c.a[1] + 22);
-    c.wr8(t5, 0);
-    c.logic<1>(0);
-  }
-L_ff5e44:;
-  { // ff5e44: jmp $ff5a3a(pc)
-    c.cycles += 12;
-    { c.jump(0xff5a3au); return; }
-  }
-L_ff5e48:;
-  { // ff5e48: move.b 23(a1), d0
-    c.cycles += 12;
-    uint32_t t6 = (c.a[1] + 23);
-    uint32_t t7 = c.rd8(t6);
-    c.d[0] = (c.d[0] & ~0xffu) | ((t7) & 0xffu);
-    c.logic<1>(t7);
-  }
-L_ff5e4c:;
-  { // ff5e4c: jmp $ff5a3a(pc)
-    c.cycles += 12;
-    { c.jump(0xff5a3au); return; }
-  }
-}
-
-void ip_ff5e5e(Cpu& c, uint32_t pc) {
-  switch (pc) {
-    case 0xff5e5e: goto L_ff5e5e;
-    case 0xff5ec8: goto L_ff5ec8;
-    case 0xff5eec: goto L_ff5eec;
-    case 0xff5ef6: goto L_ff5ef6;
-    default: c.miss(pc); return;
-  }
-L_ff5e5e:;
-  { // ff5e5e: btst.b #$7, $ff7f24
-    c.cycles += 20;
-    uint32_t t1 = c.rd8(0xff7f24u); c.z = !((t1 >> 7) & 1);
-  }
-L_ff5e66:;
-  { // ff5e66: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5eb6;
-  }
-L_ff5e6a:;
-  { // ff5e6a: cmpi.b #$4, d3
-    c.cycles += 8;
-    uint32_t t2 = 0x4u;
-    c.cmp<1>(t2, (c.d[3] & 0xffu));
-  }
-L_ff5e6e:;
-  { // ff5e6e: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5e7e;
-  }
-L_ff5e72:;
-  { // ff5e72: cmpi.b #$5, d3
-    c.cycles += 8;
-    uint32_t t3 = 0x5u;
-    c.cmp<1>(t3, (c.d[3] & 0xffu));
-  }
-L_ff5e76:;
-  { // ff5e76: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5e9a;
-  }
-L_ff5e7a:;
-  { // ff5e7a: bra 
-    c.cycles += 8;
-    goto L_ff5eb6;
-  }
-L_ff5e7e:;
-  { // ff5e7e: btst.b #$0, $ff7f24
-    c.cycles += 20;
-    uint32_t t4 = c.rd8(0xff7f24u); c.z = !((t4 >> 0) & 1);
-  }
-L_ff5e86:;
-  { // ff5e86: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5eb6;
-  }
-L_ff5e8a:;
-  { // ff5e8a: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t5 = c.rd8(0xff7f24u); c.z = !((t5 >> 6) & 1);
-  }
-L_ff5e92:;
-  { // ff5e92: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5eb6;
-  }
-L_ff5e96:;
-  { // ff5e96: bra 
-    c.cycles += 8;
-    goto L_ff5f08;
-  }
-L_ff5e9a:;
-  { // ff5e9a: btst.b #$1, $ff7f24
-    c.cycles += 20;
-    uint32_t t6 = c.rd8(0xff7f24u); c.z = !((t6 >> 1) & 1);
-  }
-L_ff5ea2:;
-  { // ff5ea2: bcc 
-    c.cycles += 8;
-    if (c.cond_eq()) goto L_ff5eb6;
-  }
-L_ff5ea6:;
-  { // ff5ea6: btst.b #$6, $ff7f24
-    c.cycles += 20;
-    uint32_t t7 = c.rd8(0xff7f24u); c.z = !((t7 >> 6) & 1);
-  }
-L_ff5eae:;
-  { // ff5eae: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) goto L_ff5eb6;
-  }
-L_ff5eb2:;
-  { // ff5eb2: bra 
-    c.cycles += 8;
-    goto L_ff5f08;
-  }
-L_ff5eb6:;
-  { // ff5eb6: move.b $ff7f2d, d7
-    c.cycles += 16;
-    uint32_t t8 = c.rd8(0xff7f2du);
-    c.d[7] = (c.d[7] & ~0xffu) | ((t8) & 0xffu);
-    c.logic<1>(t8);
-  }
-L_ff5ebc:;
-  { // ff5ebc: moveq.l #$0, d6
-    c.cycles += 4;
-    uint32_t t9 = 0x0u;
-    c.d[6] = t9;
-    c.logic<4>(t9);
-  }
-L_ff5ebe:;
-  { // ff5ebe: move.b 37(a1), d6
-    c.cycles += 12;
-    uint32_t t10 = (c.a[1] + 37);
-    uint32_t t11 = c.rd8(t10);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t11) & 0xffu);
-    c.logic<1>(t11);
-  }
-L_ff5ec2:;
-  { // ff5ec2: move.b -114(pc@ff5ec4,d6.w), d6
-    c.cycles += 12;
-    uint32_t t12 = (0xff5ec4u + -114 + (uint32_t)(int16_t)c.d[6]);
-    uint32_t t13 = c.rd8(t12);
-    c.d[6] = (c.d[6] & ~0xffu) | ((t13) & 0xffu);
-    c.logic<1>(t13);
-  }
-L_ff5ec6:;
-  { // ff5ec6: moveq.l #$3, d2
-    c.cycles += 4;
-    uint32_t t14 = 0x3u;
-    c.d[2] = t14;
-    c.logic<4>(t14);
-  }
-L_ff5ec8:;
-  { // ff5ec8: move.b -112(pc@ff5eca,d2.w), d4
-    c.cycles += 12;
-    uint32_t t15 = (0xff5ecau + -112 + (uint32_t)(int16_t)c.d[2]);
-    uint32_t t16 = c.rd8(t15);
-    c.d[4] = (c.d[4] & ~0xffu) | ((t16) & 0xffu);
-    c.logic<1>(t16);
-  }
-L_ff5ecc:;
-  { // ff5ecc: add.b d7, d4
-    c.cycles += 4;
-    uint32_t t17 = (c.d[7] & 0xffu);
-    c.d[4] = (c.d[4] & ~0xffu) | ((c.add<1>(t17, (c.d[4] & 0xffu))) & 0xffu);
-  }
-L_ff5ece:;
-  { // ff5ece: asl.b #$1, d6
-    c.cycles += 4;
-    c.d[6] = (c.d[6] & ~0xffu) | ((c.asl<1>(0x1u, (c.d[6] & 0xffu))) & 0xffu);
-  }
-L_ff5ed0:;
-  { // ff5ed0: bcc 
-    c.cycles += 8;
-    if (c.cond_cc()) goto L_ff5f02;
-  }
-L_ff5ed4:;
-  { // ff5ed4: moveq.l #$0, d5
-    c.cycles += 4;
-    uint32_t t18 = 0x0u;
-    c.d[5] = t18;
-    c.logic<4>(t18);
-  }
-L_ff5ed6:;
-  { // ff5ed6: move.b 38(a1,d2.w), d5
-    c.cycles += 12;
-    uint32_t t19 = (c.a[1] + 38 + (uint32_t)(int16_t)c.d[2]);
-    uint32_t t20 = c.rd8(t19);
-    c.d[5] = (c.d[5] & ~0xffu) | ((t20) & 0xffu);
-    c.logic<1>(t20);
-  }
-L_ff5eda:;
-  { // ff5eda: addi.w #$7f, d5
-    c.cycles += 8;
-    uint32_t t21 = 0x7fu;
-    c.d[5] = (c.d[5] & ~0xffffu) | ((c.add<2>(t21, (c.d[5] & 0xffffu))) & 0xffffu);
-  }
-L_ff5ede:;
-  { // ff5ede: sub.w d0, d5
-    c.cycles += 4;
-    uint32_t t22 = (c.d[0] & 0xffffu);
-    c.d[5] = (c.d[5] & ~0xffffu) | ((c.sub<2>(t22, (c.d[5] & 0xffffu))) & 0xffffu);
-  }
-L_ff5ee0:;
-  { // ff5ee0: cmpi.b #$80, d5
-    c.cycles += 8;
-    uint32_t t23 = 0x80u;
-    c.cmp<1>(t23, (c.d[5] & 0xffu));
-  }
-L_ff5ee4:;
-  { // ff5ee4: bcc 
-    c.cycles += 8;
-    if (c.cond_cs()) goto L_ff5eec;
-  }
-L_ff5ee8:;
-  { // ff5ee8: move.b #$7f, d5
-    c.cycles += 8;
-    uint32_t t24 = 0x7fu;
-    c.d[5] = (c.d[5] & ~0xffu) | ((t24) & 0xffu);
-    c.logic<1>(t24);
-  }
-L_ff5eec:;
-  { // ff5eec: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t25 = c.rd8(c.a[2]); c.z = !((t25 >> 7) & 1);
-  }
-L_ff5ef0:;
-  { // ff5ef0: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5eecu)) return; goto L_ff5eec; }
-  }
-L_ff5ef4:;
-  { // ff5ef4: move.b d4, (a3)
-    c.cycles += 8;
-    uint32_t t26 = (c.d[4] & 0xffu);
-    c.wr8(c.a[3], t26);
-    c.logic<1>(t26);
-  }
-L_ff5ef6:;
-  { // ff5ef6: btst.b #$7, (a2)
-    c.cycles += 12;
-    uint32_t t27 = c.rd8(c.a[2]); c.z = !((t27 >> 7) & 1);
-  }
-L_ff5efa:;
-  { // ff5efa: bcc 
-    c.cycles += 8;
-    if (c.cond_ne()) { if (c.cycles >= c.limit && !c.sync(0xff5ef6u)) return; goto L_ff5ef6; }
-  }
-L_ff5efe:;
-  { // ff5efe: move.b d5, 1(a3)
-    c.cycles += 12;
-    uint32_t t28 = (c.d[5] & 0xffu);
-    uint32_t t29 = (c.a[3] + 1);
-    c.wr8(t29, t28);
-    c.logic<1>(t28);
-  }
-L_ff5f02:;
-  { // ff5f02: subq.l #$4, d4
-    c.cycles += 4;
-    uint32_t t30 = 0x4u;
-    c.d[4] = c.sub<4>(t30, c.d[4]);
-  }
-L_ff5f04:;
-  { // ff5f04: dbcc.w d2
-    c.cycles += 8;
-    if (!(false)) { uint16_t w = (uint16_t)(c.d[2] - 1); c.d[2] = (c.d[2] & 0xffff0000u) | w; if (w != 0xffff) { if (c.cycles >= c.limit && !c.sync(0xff5ec8u)) return; goto L_ff5ec8; } }
-  }
-L_ff5f08:;
-  { // ff5f08: rts 
     c.cycles += 16;
     c.ret = c.pop32(); return;
   }

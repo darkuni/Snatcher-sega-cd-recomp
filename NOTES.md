@@ -78,3 +78,10 @@ found by logging misses in the runtime and adding them to `config/functions.txt`
 - FM data: at the start of the intro IP $FF56AE copies word RAM $200000-$201DFF (start of FMWR_1) into
   Z80 RAM $A00000 and $201E00-$202845 to $FF9000. The Z80 is never run - its RAM is just storage the
   main CPU's FM driver reads music data back from. PSG ($C00011) only gets 4 writes (silencing).
+- Title screen: Start opens a menu, Start again starts a new game (Start skips the intro).
+- Text: dialogue and the name bar need the VDP H-int (reg 0 bit 4, reg 10 = 0: every line). The game
+  points $A12006 at its own handlers ($FF0CCE / $FF0EA8 / $FF0EFA) to change VDP state below the picture;
+  the level 4 vector is $FF0000 | ($A12006). Without H-ints the text box stays empty and the scene looks
+  hung while the text engine ($135B2, state 5 at $137AC) waits for C.
+- Scene sequencer list at $9940 (index $9B40): e.g. 000F, 0011 $28000 file 8 (DATA_H00), 0012 2,
+  0010 60 (wait), 0007 $4F, 0008 4 (text) ... ; $9B44 = $FF while a list runs.

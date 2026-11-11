@@ -57,6 +57,18 @@ static void headless_report() {
         fprintf(stderr, "frame %llu  vint %u int2 %u sectors %u  cd track %d pos %u  pcm w%u on%u fm w%u psg w%u  main loop %06x sub loop %06x\n",
                 (unsigned long long)g.frame, g.n_vint, g.n_int2, g.n_sectors, g.cd.audio_track, g.cd.pos, g_pcm_writes, g_pcm_on, g_fm_writes, g_psg_writes,
                 g.main.dbg_pc, g.sub.dbg_pc);
+    if (getenv("SNATCHER_COMM") && g.frame % 30 == 0)
+        fprintf(stderr, "  f%llu cmd %04x %04x %04x %04x stat %04x %04x %04x %04x flags %02x/%02x ret=%d dmna=%d\n",
+                (unsigned long long)g.frame, g.cmd[0], g.cmd[1], g.cmd[2], g.cmd[3], g.stat[0], g.stat[1], g.stat[2], g.stat[3],
+                g.flag_main, g.flag_sub, g.ret, g.dmna);
+    if (getenv("SNATCHER_COMM") && g.frame % 30 == 0)
+        fprintf(stderr, "    sub $1511e=%02x $9b44=%02x $7f80c=%02x $7f80d=%02x $7f80e=%02x $7f80f=%02x $9808=%04x\n",
+                g.prg[0x1511e], g.prg[0x9b44], g.prg[0x7f80c], g.prg[0x7f80d], g.prg[0x7f80e], g.prg[0x7f80f], be16(&g.prg[0x9808]));
+    if (getenv("SNATCHER_COMM") && g.frame % 300 == 0) {
+        fprintf(stderr, "    seq idx $9b40=%04x list:", be16(&g.prg[0x9b40]));
+        for (int k = 0; k < 16; k++) fprintf(stderr, " %04x", be16(&g.prg[0x9940 + 2 * k]));
+        fprintf(stderr, "  text $9720=%02x $9722=%02x $9727=%02x $9740=%02x $7991=%02x\n", g.prg[0x9720], g.prg[0x9722], g.prg[0x9727], g.prg[0x9740], g.prg[0x7991]);
+    }
     if (g.frame < s_frames) return;
     FILE* f = fopen("misses.txt", "w");
     for (int c = 0; c < 2; c++)
@@ -65,6 +77,10 @@ static void headless_report() {
     fprintf(stderr, "done: %llu frames, %zu main / %zu sub addresses interpreted (misses.txt)\n",
             (unsigned long long)g.frame, g.misses[0].size(), g.misses[1].size());
     print_profile();
+    if (FILE* v = fopen("vdp.bin", "wb")) {         // VDP state for offline inspection
+        fwrite(g.vdp.vram, 1, 0x10000, v); fwrite(g.vdp.cram, 2, 64, v); fwrite(g.vdp.vsram, 2, 40, v);
+        fwrite(g.vdp.reg, 1, 32, v); fclose(v);
+    }
     fflush(stderr);
     _Exit(0);
 }

@@ -67,7 +67,9 @@ struct Scd {
     uint16_t timer = 0;
     bool vint_pending = false;      // main level 6 (VDP V-blank)
     int64_t vint_due = 0;
-    int64_t timer_due = 0;          // sub level 3: next timer interrupt (sub cycles)           // main cycle at which the V-int fires (just after the V-blank flag rises)
+    int64_t timer_due = 0;
+    bool hint_pending = false;      // main level 4 (VDP H-int)
+    int hcount = 0;                 // VDP H-int line counter (reg 10)          // sub level 3: next timer interrupt (sub cycles)           // main cycle at which the V-int fires (just after the V-blank flag rises)
     uint8_t cdc_mode = 0;           // $FF8004 bits 2-0: CDC destination (2 main read, 3 sub read, 4 PCM, 5 PRG-RAM, 7 word RAM)
     bool cdc_dsr = false, cdc_edt = false;   // data set ready / end of data transfer
     uint16_t dma_addr = 0;          // $FF800A
