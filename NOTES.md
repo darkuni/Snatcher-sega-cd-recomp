@@ -68,3 +68,10 @@ found by logging misses in the runtime and adding them to `config/functions.txt`
   the main BIOS's RAM-cartridge backup RAM call. The runtime reports no cartridge (carry set).
 - Intro: licence text -> green scanner line -> Konami logo (512-frame timer, jingle $10203 via $FF19F2)
   -> fade -> CD-DA track 2. The next part waits on the CD audio play position.
+- CDBSTAT table ($5E80): +0 status word, high byte = drive state ($00 stopped, $01 playing, $05 paused,
+  bit 15 = busy); +8 absolute time, +$C relative time (read while playing). Track 2 (title music) is
+  played with MSCPLAY1 and the intro continues when it ends.
+- Sound: the sound driver runs in SUBCODE's level-3 timer interrupt ($D48E via $5F84). FM is written by
+  the MAIN CPU directly ($A04000/$A04002, ~1000 writes during the Konami jingle) - no Z80 driver.
+  PCM wave RAM is filled at boot; channels start in voiced scenes.
+- Controls (Options screen): A draws the Blaster, B cancels, C selects/shoots.

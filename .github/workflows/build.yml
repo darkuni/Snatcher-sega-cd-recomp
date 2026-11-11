@@ -1,0 +1,114 @@
+name: Build Windows and Linux
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  SDL2_VERSION: 2.30.9
+
+jobs:
+  windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install mingw-w64 and Ninja
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mingw-w64 ninja-build cmake
+
+      - name: SDL2 development package (mingw)
+        run: |
+          curl -sSL -o sdl.tar.gz https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-devel-${SDL2_VERSION}-mingw.tar.gz
+          tar xzf sdl.tar.gz
+          echo "SDL2_DIR=$PWD/SDL2-${SDL2_VERSION}/x86_64-w64-mingw32" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          cmake -S src -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=$PWD/src/mingw.cmake -DSDL2_DIR="$SDL2_DIR"
+          ninja -C build-win
+
+      - name: Stage package
+        run: |
+          mkdir -p dist/game
+          cp build-win/snatcher.exe dist/
+          cp "$SDL2_DIR/bin/SDL2.dll" dist/
+          cp LICENSE THIRD_PARTY_NOTICES.md dist/
+          cat > dist/README.txt <<'TXT'
+          Snatcher (Sega CD) - native Windows port (static recompilation) - work in progress
+
+          The game is NOT included. Put your own disc image of Snatcher (Sega CD, US release
+          T-95035: the .cue file and its .bin) next to snatcher.exe or in the "game" folder and
+          run snatcher.exe - or drag the .cue onto snatcher.exe.
+
+          Controls (keyboard / controller):
+            arrows / d-pad      move
+            C or Space / A      select (Sega C)
+            X / B               cancel (Sega B)
+            Z / X               draw Blaster (Sega A)
+            Enter / Start       Start
+            F11                 fullscreen (Esc leaves it)
+
+          Saves (backup RAM) are written to snatcher.brm next to the disc image.
+          Not done yet: FM music/effects, settings menu.
+          TXT
+          sed -i 's/^          //' dist/README.txt
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: snatcher-win64
+          path: dist/
+
+  linux:
+    # Linux / SteamOS (Steam Deck): needs only SDL2 from the system
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install SDL2 and Ninja
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsdl2-dev ninja-build cmake
+
+      - name: Build
+        run: |
+          cmake -S src -B build-linux -G Ninja -DUSE_SDL=ON
+          ninja -C build-linux
+
+      - name: Stage package
+        run: |
+          mkdir -p dist/snatcher/game
+          cp build-linux/snatcher dist/snatcher/
+          strip dist/snatcher/snatcher
+          cp LICENSE THIRD_PARTY_NOTICES.md dist/snatcher/
+          cat > dist/snatcher/README.txt <<'TXT'
+          Snatcher (Sega CD) - native Linux / SteamOS port (static recompilation) - work in progress
+
+          The game is NOT included. Put your own disc image of Snatcher (Sega CD, US release
+          T-95035: the .cue file and its .bin) next to the snatcher program or in the "game"
+          folder, then run ./snatcher (or ./snatcher /path/to/image.cue).
+
+          Steam Deck: in Desktop Mode copy this folder somewhere (e.g. ~/Games/snatcher), then
+          "Add a Non-Steam Game" in Steam to play it in Game Mode. It needs only SDL2, which
+          SteamOS has.
+
+          Controls: d-pad / arrows move, A or C/Space select, B or X cancel, X or Z draws the
+          Blaster, Start / Enter. F11 fullscreen.
+          Not done yet: FM music/effects, settings menu.
+          TXT
+          sed -i 's/^          //' dist/snatcher/README.txt
+          tar czf snatcher-linux-x86_64.tar.gz -C dist snatcher
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: snatcher-linux-x86_64
+          path: snatcher-linux-x86_64.tar.gz

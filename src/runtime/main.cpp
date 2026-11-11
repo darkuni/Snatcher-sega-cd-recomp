@@ -1,12 +1,36 @@
-// Headless runner (until the SDL front end exists): boots the game and runs N frames.
-//   snatcher <game dir> [frames]
+// Front end. Two modes:
+//   snatcher <disc.cue>            window (SDL2): video, audio, keyboard / game controller
+//   snatcher <disc.cue> <frames>   headless test run: N frames, then misses.txt and stats
+// (a folder made by tools/prepare_disc.py works in place of the .cue, for development)
+// The emulated CPUs run on worker threads; this thread owns SDL and paces frames at 59.92 Hz.
+#include <atomic>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <mutex>
+#include <thread>
+#include <filesystem>
+#include <vector>
+#include "audio.h"
 #include "system.h"
+#ifdef USE_SDL
+#include <SDL.h>
+#endif
 
 void run_machine();
 void print_profile();
-static uint64_t s_frames = 600;
+
+static uint64_t s_frames = 0;           // headless: stop after this many
+static bool s_headless = true;
+
+// ---------------------------------------------------------------- frame hand-off (emu -> host)
+static std::mutex s_fm;
+static std::condition_variable s_fcv;
+static uint32_t s_fb[Vdp::W * Vdp::H];
+static int s_fw = 256, s_fh = 224;
+static bool s_frame_ready = false, s_go = true;
+static std::vector<int16_t> s_audio;
 
 static void dump_frame() {
     static int every = getenv("SNATCHER_DUMP") ? atoi(getenv("SNATCHER_DUMP")) : 0;
@@ -26,39 +50,198 @@ static void dump_frame() {
     fclose(f);
 }
 
-void frame_done() {
-    dump_frame();
+extern uint32_t g_pcm_writes, g_pcm_on;
+extern uint32_t g_fm_writes;
+static void headless_report() {
     if (g.frame % 60 == 0)
-        fprintf(stderr, "frame %llu  vint %u ifl2 %u int2 %u sectors %u  vdp r1 %02x  vint@%06x  flags %02x/%02x  sub state $7840=%04x\n",
-                (unsigned long long)g.frame, g.n_vint, g.n_ifl2, g.n_int2, g.n_sectors, g.vdp.reg[1], g.main_vint,
-                g.flag_main, g.flag_sub, be16(&g.prg[0x7840]));
-    if (g.frame % 60 == 0) fprintf(stderr, "   state $e022=%04x e04a=%04x e04e=%04x cmd %04x %04x stat %04x %04x  dmna %u ret %u (now ret=%d dmna=%d) $e028=%02x  loop main %06x sub %06x  sub sr %04x imask-reg %02x timer %02x\n", be16(&g.wram[0xe022]), be16(&g.wram[0xe04a]), be16(&g.wram[0xe04e]), g.cmd[0], g.cmd[1], g.stat[0], g.stat[1], g.n_dmna, g.n_ret, g.ret, g.dmna, g.wram[0xe028], g.main.dbg_pc, g.sub.dbg_pc, g.sub.get_sr(), g.sub_imask, g.timer);
-    if (g.force_interp && g.frame % 60 == 0) fprintf(stderr, "   pc main %06x sub %06x\n", g.main.dbg_pc, g.sub.dbg_pc);
-    if (g.frame >= s_frames) {
-        FILE* f = fopen("misses.txt", "w");
-        for (int c = 0; c < 2; c++)
-            for (uint32_t a : g.misses[c]) if (f) fprintf(f, "%s %06x\n", c ? "sub" : "main", a);
-        if (f) fclose(f);
-        fprintf(stderr, "done: %llu frames, %zu main / %zu sub addresses interpreted (misses.txt)\n",
-                (unsigned long long)g.frame, g.misses[0].size(), g.misses[1].size());
-        print_profile();
-        { int nz = 0; for (int k = 0; k < 0x10000; k++) nz += g.vdp.vram[k] != 0;
-          int cz = 0; for (int k = 0; k < 64; k++) cz += g.vdp.cram[k] != 0;
-          fprintf(stderr, "vram nonzero %d bytes, cram nonzero %d entries, regs:", nz, cz);
-          for (int r = 0; r < 24; r++) fprintf(stderr, " %02x", g.vdp.reg[r]);
-          fprintf(stderr, "\n");
-          FILE* f = fopen("vdp.bin", "wb");
-          if (f) { fwrite(g.vdp.vram, 1, 0x10000, f); fwrite(g.vdp.cram, 2, 64, f); fwrite(g.vdp.vsram, 2, 40, f); fwrite(g.vdp.reg, 1, 32, f); fclose(f); } }
-        fflush(stderr);
-        _Exit(0);
+        fprintf(stderr, "frame %llu  vint %u int2 %u sectors %u  cd track %d pos %u  pcm w%u on%u fm w%u  main loop %06x sub loop %06x\n",
+                (unsigned long long)g.frame, g.n_vint, g.n_int2, g.n_sectors, g.cd.audio_track, g.cd.pos, g_pcm_writes, g_pcm_on, g_fm_writes,
+                g.main.dbg_pc, g.sub.dbg_pc);
+    if (g.frame < s_frames) return;
+    FILE* f = fopen("misses.txt", "w");
+    for (int c = 0; c < 2; c++)
+        for (uint32_t a : g.misses[c]) if (f) fprintf(f, "%s %06x\n", c ? "sub" : "main", a);
+    if (f) fclose(f);
+    fprintf(stderr, "done: %llu frames, %zu main / %zu sub addresses interpreted (misses.txt)\n",
+            (unsigned long long)g.frame, g.misses[0].size(), g.misses[1].size());
+    print_profile();
+    fflush(stderr);
+    _Exit(0);
+}
+
+// SNATCHER_INPUT="1300:80,1306:00,..." - at frame N set the pad to hex buttons (U D L R B C A Start)
+static void scripted_input() {
+    static const char* s = getenv("SNATCHER_INPUT");
+    if (!s) return;
+    for (const char* p = s; *p;) {
+        unsigned long f = strtoul(p, (char**)&p, 10);
+        if (*p != ':') break;
+        unsigned long b = strtoul(p + 1, (char**)&p, 16);
+        if (f == g.frame) g.pad = (uint8_t)b;
+        if (*p == ',') p++;
     }
 }
 
+void frame_done() {                     // emu side, once per frame (scheduler lock held)
+    dump_frame();
+    scripted_input();
+    std::vector<int16_t> a;
+    audio_frame(a);
+    if (s_headless) {
+        static FILE* wav = getenv("SNATCHER_WAV") ? fopen(getenv("SNATCHER_WAV"), "wb") : nullptr;   // raw s16le stereo 44.1k
+        if (wav) { fwrite(a.data(), 2, a.size(), wav); fflush(wav); }
+        headless_report();
+        return;
+    }
+    std::unique_lock<std::mutex> lk(s_fm);
+    s_fcv.wait(lk, [] { return s_go; });        // host paces us
+    s_go = false;
+    memcpy(s_fb, g.vdp.fb, sizeof s_fb);
+    s_fw = g.vdp.width();
+    s_fh = g.vdp.height();
+    s_audio.insert(s_audio.end(), a.begin(), a.end());
+    s_frame_ready = true;
+    s_fcv.notify_all();
+}
+
+#ifdef USE_SDL
+static uint8_t keys_to_pad(const uint8_t* k, SDL_GameController* gc) {
+    uint8_t p = 0;
+    auto btn = [&](SDL_GameControllerButton b) { return gc && SDL_GameControllerGetButton(gc, b); };
+    int ax = gc ? SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_LEFTX) : 0;
+    int ay = gc ? SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_LEFTY) : 0;
+    if (k[SDL_SCANCODE_UP] || btn(SDL_CONTROLLER_BUTTON_DPAD_UP) || ay < -16000) p |= 0x01;
+    if (k[SDL_SCANCODE_DOWN] || btn(SDL_CONTROLLER_BUTTON_DPAD_DOWN) || ay > 16000) p |= 0x02;
+    if (k[SDL_SCANCODE_LEFT] || btn(SDL_CONTROLLER_BUTTON_DPAD_LEFT) || ax < -16000) p |= 0x04;
+    if (k[SDL_SCANCODE_RIGHT] || btn(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) || ax > 16000) p |= 0x08;
+    // Snatcher: A draws the Blaster, B cancels, C selects / shoots
+    if (k[SDL_SCANCODE_X] || btn(SDL_CONTROLLER_BUTTON_B)) p |= 0x10;          // B: cancel
+    if (k[SDL_SCANCODE_C] || k[SDL_SCANCODE_SPACE] || btn(SDL_CONTROLLER_BUTTON_A)) p |= 0x20;   // C: select
+    if (k[SDL_SCANCODE_Z] || btn(SDL_CONTROLLER_BUTTON_X)) p |= 0x40;          // A: Blaster
+    if (k[SDL_SCANCODE_RETURN] || btn(SDL_CONTROLLER_BUTTON_START)) p |= 0x80;
+    return p;
+}
+
+static int run_window() {
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) != 0) {
+        fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
+        return 1;
+    }
+    SDL_Window* win = SDL_CreateWindow("Snatcher", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320 * 3, 224 * 3,
+                                       SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!ren) ren = SDL_CreateRenderer(win, -1, 0);
+    SDL_Texture* tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Vdp::W, Vdp::H);
+    SDL_AudioSpec want{}, have{};
+    want.freq = 44100; want.format = AUDIO_S16SYS; want.channels = 2; want.samples = 1024;
+    SDL_AudioDeviceID dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
+    if (dev) SDL_PauseAudioDevice(dev, 0);
+    SDL_GameController* gc = nullptr;
+
+    std::thread emu(run_machine);
+    emu.detach();
+
+    const double frame_s = 1.0 / 59.922743;
+    uint64_t freq = SDL_GetPerformanceFrequency(), next = SDL_GetPerformanceCounter();
+    bool fullscreen = false;
+    for (;;) {
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) { SDL_Quit(); _Exit(0); }
+            if (e.type == SDL_CONTROLLERDEVICEADDED && !gc) gc = SDL_GameControllerOpen(e.cdevice.which);
+            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_F11) {
+                fullscreen = !fullscreen;
+                SDL_SetWindowFullscreen(win, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+            }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE && fullscreen) {
+                fullscreen = false;
+                SDL_SetWindowFullscreen(win, 0);
+            }
+        }
+        g.pad = keys_to_pad(SDL_GetKeyboardState(nullptr), gc);
+        // let the emulator produce one frame
+        std::vector<int16_t> a;
+        int fw, fh;
+        {
+            std::unique_lock<std::mutex> lk(s_fm);
+            s_go = true;
+            s_fcv.notify_all();
+            s_fcv.wait(lk, [] { return s_frame_ready; });
+            s_frame_ready = false;
+            SDL_UpdateTexture(tex, nullptr, s_fb, Vdp::W * 4);
+            a.swap(s_audio);
+            fw = s_fw; fh = s_fh;
+        }
+        if (dev) {
+            if (SDL_GetQueuedAudioSize(dev) < 44100 * 4 / 4)       // keep about 250 ms at most
+                SDL_QueueAudio(dev, a.data(), (Uint32)(a.size() * 2));
+        }
+        // 4:3 picture, centred
+        int ww, wh;
+        SDL_GetRendererOutputSize(ren, &ww, &wh);
+        int h = wh, w = h * 4 / 3;
+        if (w > ww) { w = ww; h = w * 3 / 4; }
+        SDL_Rect src{0, 0, fw, fh}, dst{(ww - w) / 2, (wh - h) / 2, w, h};
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_RenderClear(ren);
+        SDL_RenderCopy(ren, tex, &src, &dst);
+        SDL_RenderPresent(ren);
+        // pace to 59.92 Hz (vsync may already have waited)
+        next += (uint64_t)(frame_s * freq);
+        uint64_t now = SDL_GetPerformanceCounter();
+        if (now < next) SDL_Delay((Uint32)((next - now) * 1000 / freq));
+        else if (now - next > freq / 4) next = now;           // fell far behind: resync
+    }
+}
+#endif
+
+// No path given: look for a .cue next to the program, in ./game, or in the current folder.
+static std::string find_disc(const char* argv0) {
+    namespace fs = std::filesystem;
+    std::vector<fs::path> dirs;
+    std::error_code ec;
+    fs::path exe = fs::absolute(argv0, ec).parent_path();
+    dirs.push_back(exe); dirs.push_back(exe / "game"); dirs.push_back(fs::current_path(ec)); dirs.push_back("game");
+    for (auto& d : dirs) {
+        for (auto it = fs::directory_iterator(d, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
+            std::string ext = it->path().extension().string();
+            for (auto& ch : ext) ch = (char)tolower(ch);
+            if (ext == ".cue") return it->path().string();
+        }
+        ec.clear();
+    }
+    return "";
+}
+
 int main(int argc, char** argv) {
-    if (argc < 2) { fprintf(stderr, "usage: %s <game dir> [frames]\n", argv[0]); return 1; }
-    if (argc > 2) s_frames = strtoull(argv[2], nullptr, 10);
-    if (!g.boot(argv[1])) return 1;
+    std::string disc = argc > 1 ? argv[1] : find_disc(argv[0]);
+    if (disc.empty()) {
+        const char* msg = "Put your Snatcher (Sega CD, US) disc image - the .cue file and its .bin - next to this "
+                          "program or in a \"game\" folder, or drag the .cue onto the program.";
+        fprintf(stderr, "%s\n", msg);
+#ifdef USE_SDL
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Snatcher", msg, nullptr);
+#endif
+        return 1;
+    }
+    if (!g.boot(disc)) {
+#ifdef USE_SDL
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Snatcher", ("Could not read the disc image:\n" + disc).c_str(), nullptr);
+#endif
+        return 1;
+    }
     g.force_interp = getenv("SNATCHER_INTERP") != nullptr;
-    run_machine();
-    return 0;
+    if (argc > 2) {
+        s_frames = strtoull(argv[2], nullptr, 10);
+        run_machine();
+        return 0;
+    }
+#ifdef USE_SDL
+    s_headless = false;
+    return run_window();
+#else
+    fprintf(stderr, "built without SDL: give a frame count for a headless run\n");
+    return 1;
+#endif
 }

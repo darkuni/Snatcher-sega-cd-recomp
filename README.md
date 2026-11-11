@@ -6,6 +6,7 @@ C++ by `src/recomp.py`. A runtime that replaces the Genesis / Sega CD hardware (
 graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windows and Linux / SteamOS.
 
 **No game data is included.** You need your own copy of the game as a disc image (`.cue` + `.bin`).
+Put it next to the program (or in a `game` folder) and run it, or pass the `.cue` path.
 
 ## Status
 
@@ -24,9 +25,14 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
 - [x] VDP: ports, DMA (68k incl. word RAM, fill, copy), planes A/B, window, sprites, priority,
       per-line/cell scrolling - the licence screen, scanner line and Konami logo render correctly
       (Snatcher does not use the Sega CD graphics ASIC)
-- [ ] CD audio playback position (the intro is timed to it), PCM + FM + CD audio output
-- [ ] SDL window, input, settings menu
-- [ ] Windows and Linux builds
+- [x] CD audio: play/pause/stop with a real play position (the intro is timed to it), music from the
+      disc; reads the .cue/.bin directly - no extraction step for players
+- [x] RF5C164 PCM chip (voices), sub-CPU timer interrupt (drives the sound driver)
+- [x] SDL2 window (4:3, F11 fullscreen), keyboard + controller, 59.92 Hz pacing
+- [x] Reaches the title screen and menus
+- [ ] FM (YM2612) - the game drives it from the main CPU; needs an OPN2 core
+- [ ] Settings menu, save location, longer play-testing
+- [x] Windows and Linux CI builds (`.github/workflows/build.yml`)
 
 ## Layout
 
@@ -40,16 +46,23 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
 | `tools/dis68k.py`, `tools/findbase.py`, `tools/check_decoder.py` | dev tools (need `pip install capstone`) |
 | `tools/difftest/` | random-instruction differential test against Musashi |
 
-## Building (dev, headless for now)
+## Building
 
+`src/gen` (the recompiled C++) is committed, so building needs no game data:
+```
+cmake -S src -B build && cmake --build build      # needs SDL2 (libsdl2-dev)
+build/snatcher "Snatcher (Sega CD) (U)-redump.cue"
+```
+Regenerating `src/gen` (dev):
 ```
 python3 tools/prepare_disc.py "Snatcher (Sega CD) (U)-redump.cue" game
 python3 src/recomp.py game config src/gen
-cmake -S src -B build && cmake --build build
-build/snatcher game 600          # runs 600 frames, writes misses.txt
+build/snatcher game 600          # headless: runs 600 frames, writes misses.txt
 SNATCHER_DUMP=60 build/snatcher game 1200   # also writes frame_NNNNN.ppm every 60 frames
 ```
 
 Debug switches: `SNATCHER_INTERP=1` runs everything in Musashi; `SNATCHER_INTERP_IMG=IP.bin` or
 `SNATCHER_INTERP_LO/HI=<hex>` interpret one image / address range; `SNATCHER_TRACE_TOP=1` logs
-top-level dispatches; `SNATCHER_PROFILE=1` prints the loops each CPU waits in. Addresses in `misses.txt` go into `config/functions.txt`.
+top-level dispatches; `SNATCHER_PROFILE=1` prints the loops each CPU waits in;
+`SNATCHER_INPUT=1260:80,1266:00` scripts the pad (hex: U D L R B C A Start); `SNATCHER_WAV=out.raw` writes
+the audio (s16le stereo 44.1 kHz) in headless runs. Addresses in `misses.txt` go into `config/functions.txt`.

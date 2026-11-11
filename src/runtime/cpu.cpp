@@ -178,6 +178,13 @@ static bool take_interrupt(Cpu& c, uint32_t resume) {
             return deliver(c, 6, g.main_vint, resume, false);
         }
     } else {
+        if ((g.sub_imask & 8) && g.timer && c.imask < 3 && c.cycles >= g.timer_due) {
+            // level 3 timer: handler from the BIOS jump table ($5F82: jmp xxxxxx)
+            g.timer_due += (int64_t)(g.timer + 1) * 384;
+            if (g.timer_due < c.cycles) g.timer_due = c.cycles + (int64_t)(g.timer + 1) * 384;
+            uint32_t h = c.rd32(0x5f84);
+            if (h) return deliver(c, 3, h, resume, false);
+        }
         if (g.sub_int2 && (g.sub_imask & 4) && c.imask < 2) {
             g.sub_int2 = false;
             g.n_int2++;

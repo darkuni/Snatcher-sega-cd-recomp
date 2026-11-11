@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "system.h"
+#include "disc.h"
 
 static uint32_t rd32(Cpu& c, uint32_t a) { return c.rd32(a); }
 
@@ -18,14 +19,62 @@ static const int64_t SECTOR_CYCLES = SUB_HZ / 75;          // 1x speed: 75 secto
 static void cd_fill(Cpu& c) {
     CdHle& cd = g.cd;
     if (cd.ready || !cd.left || c.cycles < cd.next_ready) return;
-    fseek(cd.iso, (long)cd.lba * 2048, SEEK_SET);
-    if (fread(cd.buf, 1, 2048, cd.iso) != 2048) memset(cd.buf, 0, 2048);
+    if (!g_disc.tracks.empty()) g_disc.read_data(cd.lba, cd.buf);
+    else {
+        fseek(cd.iso, (long)cd.lba * 2048, SEEK_SET);
+        if (fread(cd.buf, 1, 2048, cd.iso) != 2048) memset(cd.buf, 0, 2048);
+    }
     cd.cur = cd.lba;
     cd.lba++;
     cd.left--;
     cd.ready = true;
     g.n_sectors++;
     cd.next_ready = c.cycles + (cd.fast ? SECTOR_CYCLES / 16 : SECTOR_CYCLES);
+}
+
+void CdHle::load_tracks(const char* path) {
+    FILE* f = fopen(path, "r");
+    if (!f) { fprintf(stderr, "[cd] no %s - CD audio disabled\n", path); return; }
+    char kind[16];
+    Track t;
+    while (ntracks < 100 && fscanf(f, "%d %d %d %15s", &t.n, &t.start, &t.len, kind) == 4) {
+        t.audio = kind[0] == 'a';
+        tracks[ntracks++] = t;
+    }
+    fclose(f);
+}
+
+int CdHle::track_at(uint32_t lba) const {
+    for (int k = ntracks - 1; k >= 0; k--)
+        if ((int)lba >= tracks[k].start) return tracks[k].n;
+    return 1;
+}
+
+void CdHle::play(int track, int mode, int64_t now) {
+    for (int k = 0; k < ntracks; k++)
+        if (tracks[k].n == track) {
+            audio_track = track; play_mode = mode; paused = false;
+            play_from = pos = tracks[k].start; play_t0 = now;
+            return;
+        }
+    audio_track = 0; play_mode = 0;
+}
+
+void CdHle::update(int64_t now) {
+    if (!play_mode || paused) return;
+    pos = play_from + (uint32_t)((now - play_t0) / SECTOR_CYCLES);
+    const Track* t = nullptr;
+    for (int k = 0; k < ntracks; k++) if (tracks[k].n == audio_track) t = &tracks[k];
+    if (!t) { play_mode = 0; return; }
+    uint32_t end = t->start + t->len;
+    if (play_mode == 1) {                                   // to end of disc: move through the tracks
+        const Track& last = tracks[ntracks - 1];
+        if (pos >= (uint32_t)(last.start + last.len)) { play_mode = 0; audio_track = 0; return; }
+        audio_track = track_at(pos);
+    } else if (pos >= end) {
+        if (play_mode == 3) { play_from = t->start; play_t0 = now; pos = play_from; }
+        else { play_mode = 0; audio_track = 0; }
+    }
 }
 
 static void msf(uint32_t lba, uint8_t out[4]) {
@@ -42,13 +91,19 @@ static void cdbios(Cpu& c) {
     CdHle& cd = g.cd;
     c.c = false;
     switch (fn) {
-    case 0x0002: cd.audio_track = 0; break;                                   // MSCSTOP
+    case 0x0002: cd.play_mode = 0; cd.audio_track = 0; break;                // MSCSTOP
+    case 0x0003: cd.update(c.cycles); cd.paused = true; break;               // MSCPAUSEON
+    case 0x0004:                                                              // MSCPAUSEOFF
+        if (cd.paused) { cd.paused = false; cd.play_from = cd.pos; cd.play_t0 = c.cycles; }
+        break;
     case 0x0008: case 0x0009: break;                                          // ROMPAUSEON/OFF
     case 0x0010: break;                                                       // DRVINIT
-    case 0x0011: case 0x0012: case 0x0013:                                    // MSCPLAY / PLAY1 / PLAYR
-        cd.audio_track = c.rd16(c.a[0]);
-        fprintf(stderr, "[cd] play track %d (%s)\n", cd.audio_track, fn == 0x12 ? "once" : "repeat");
+    case 0x0011: case 0x0012: case 0x0013: {                                  // MSCPLAY / PLAY1 / PLAYR
+        int t = c.rd16(c.a[0]);
+        cd.play(t, fn == 0x11 ? 1 : fn == 0x12 ? 2 : 3, c.cycles);
+        fprintf(stderr, "[cd] play track %d (%s)\n", t, fn == 0x11 ? "to end" : fn == 0x12 ? "once" : "repeat");
         break;
+    }
     case 0x0017:                                                              // ROMREAD: until stopped
         cd.lba = rd32(c, c.a[0]); cd.left = 0x7fffffff; cd.ready = false;
         cd.next_ready = c.cycles + SECTOR_CYCLES;
@@ -58,10 +113,26 @@ static void cdbios(Cpu& c) {
         cd.lba = rd32(c, c.a[0]); cd.left = rd32(c, c.a[0] + 4); cd.ready = false;
         cd.next_ready = c.cycles + (cd.fast ? SECTOR_CYCLES / 16 : SECTOR_CYCLES * 2);
         break;
-    case 0x0081:                                                              // CDBSTAT
-        g.prg[0x5e80] = 0; g.prg[0x5e81] = 0;                                 // BIOS idle / ready
+    case 0x0081: {                                                            // CDBSTAT
+        cd.update(c.cycles);
+        uint8_t* t = &g.prg[0x5e80];
+        memset(t, 0, 0x20);
+        t[0] = cd.play_mode ? (cd.paused ? 0x05 : 0x01) : 0x00;               // drive state: stopped/playing/paused
+        uint8_t a[4], r[4];
+        msf(cd.pos, a);
+        uint32_t tstart = 0;
+        for (int k = 0; k < cd.ntracks; k++) if (cd.tracks[k].n == cd.track_at(cd.pos)) tstart = cd.tracks[k].start;
+        msf(cd.pos - tstart - 150, r);                                         // relative time (msf adds 150)
+        t[8] = a[0]; t[9] = a[1]; t[10] = a[2]; t[11] = (uint8_t)cd.track_at(cd.pos);
+        t[12] = r[0]; t[13] = r[1]; t[14] = r[2]; t[15] = 0;
+        t[16] = 1; t[17] = cd.ntracks ? (uint8_t)cd.tracks[cd.ntracks - 1].n : 1;
+        if (cd.ntracks) {
+            uint8_t lo[4]; msf(cd.tracks[cd.ntracks - 1].start + cd.tracks[cd.ntracks - 1].len, lo);
+            t[20] = lo[0]; t[21] = lo[1]; t[22] = lo[2];
+        }
         c.a[0] = 0x5e80;
         break;
+    }
     case 0x0084: break;                                                       // CDBPAUSE
     case 0x0089: cd.left = 0; cd.ready = false; break;                        // CDCSTOP
     case 0x008a: cd_fill(c); c.c = !cd.ready; break;                          // CDCSTAT
@@ -81,8 +152,8 @@ static void cdbios(Cpu& c) {
             for (int k = 0; k < 2048; k++) g.word[(a + k) & 0x3ffff] = cd.buf[k];
             g.cdc_dsr = g.cdc_edt = true;
         } else if (g.cdc_mode == 4) {
-            uint32_t a = (uint32_t)g.dma_addr << 2;
-            for (int k = 0; k < 2048; k++) g.pcm[(a + k) & 0xffff] = cd.buf[k];
+            uint32_t a = ((uint32_t)g.dma_addr << 2) & 0xfff;     // into the selected wave RAM bank
+            for (int k = 0; k < 2048; k++) pcm_dma_write(a + k, cd.buf[k]);
             g.cdc_dsr = g.cdc_edt = true;
         } else {
             g.cdc_dsr = true;           // sub CPU (CDCTRN) or main CPU ($A12008) reads it

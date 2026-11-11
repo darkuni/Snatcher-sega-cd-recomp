@@ -3,7 +3,8 @@
 
     python3 prepare_disc.py <disc.cue> <out dir>
 
-Writes the data track as track01.iso, the boot programs IP.bin (main CPU, loaded at $FF0000)
+Writes the data track as track01.iso, the CD audio tracks as trackNN.raw + tracks.txt, the boot
+programs IP.bin (main CPU, loaded at $FF0000)
 and SP.bin (sub CPU, loaded at $6000), and every file of the ISO9660 root (PCMLD_01.BIN, the
 85 MB voice bank, is skipped unless --all is given). Dev tool only - not shipped with the game.
 """
@@ -67,7 +68,23 @@ def main():
                 open(os.path.join(out, name), 'wb').write(iso[e * 2048:e * 2048 + sz])
                 n += 1
         p += rl
-    print(f'{out}: track01.iso ({len(iso)} bytes), IP.bin, SP.bin, {n} files')
+    # CD audio: tracks.txt (number, start sector on disc, length in sectors) + trackNN.raw (44.1 kHz
+    # 16-bit stereo little endian, from INDEX 01 to the next track)
+    total = os.path.getsize(bin_name) // 2352
+    with open(os.path.join(out, 'tracks.txt'), 'w') as tf, open(bin_name, 'rb') as f:
+        for k, t in enumerate(tracks):
+            start = t['i1']
+            nxt = tracks[k + 1].get('i0', tracks[k + 1]['i1']) if k + 1 < len(tracks) else total
+            tf.write(f"{t['n']} {start} {nxt - start} {'data' if t['mode'] != 'AUDIO' else 'audio'}\n")
+            if t['mode'] == 'AUDIO':
+                f.seek(start * 2352)
+                with open(os.path.join(out, f"track{t['n']:02d}.raw"), 'wb') as af:
+                    left = (nxt - start) * 2352
+                    while left:
+                        chunk = f.read(min(left, 1 << 20))
+                        af.write(chunk)
+                        left -= len(chunk)
+    print(f'{out}: track01.iso ({len(iso)} bytes), IP.bin, SP.bin, {n} files, {len(tracks) - 1} audio tracks')
 
 
 if __name__ == '__main__':

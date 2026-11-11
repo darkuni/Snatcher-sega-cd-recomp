@@ -1,9 +1,11 @@
 // Sega CD memory maps and gate array (main side $A12000, sub side $FF8000).
 #include "system.h"
 #include <cstring>
+#include "disc.h"
 
 Scd g;
 void yield_to_sub();
+uint32_t g_fm_writes = 0;
 
 void Scd::log_miss(int cpu, uint32_t pc) {
     for (uint32_t a : misses[cpu]) if (a == pc) return;
@@ -61,7 +63,13 @@ uint8_t MainBus::rd8(uint32_t a) {
     if (a >= 0xa12000 && a < 0xa12040) { uint16_t w = main_ga_rd(a); return (a & 1) ? (uint8_t)w : w >> 8; }
     if (a >= 0xc00000 && a < 0xc00020) { uint16_t w = rd16(a & ~1); return (a & 1) ? (uint8_t)w : w >> 8; }
     if (a == 0xa10001) return 0x80;             // overseas, NTSC, expansion (Sega CD) present
-    if (a >= 0xa10003 && a <= 0xa10005) return 0x7f;
+    if (a == 0xa10003) {                        // 3-button pad, port 1 (buttons active low)
+        uint8_t p = g.pad, th = g.pad_th & 0x40;
+        if (th) return 0x40 | (~((p & 0x0f) | ((p >> 4 & 1) << 4) | ((p >> 5 & 1) << 5)) & 0x3f);   // C B R L D U
+        return (~((p & 0x03) | ((p >> 6 & 1) << 4) | ((p >> 7 & 1) << 5)) & 0x33);               // St A 0 0 D U
+    }
+    if (a == 0xa10005) return 0x7f;             // port 2: nothing connected
+    if (a == 0xa10009) return g.pad_ctrl;
     return 0;
 }
 
@@ -87,6 +95,9 @@ void MainBus::wr8(uint32_t a, uint8_t v) {
     if (a >= 0x200000 && a < 0x240000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0x020000 && a < 0x040000) { g.prg[(g.prg_bank << 17) | (a & 0x1ffff)] = v; return; }
     if (a >= 0xa12000 && a < 0xa12040) { main_ga_wr8(a, v); return; }
+    if (a >= 0xa04000 && a < 0xa04004) { g_fm_writes++; return; }
+    if (a == 0xa10003) { if (g.pad_ctrl & 0x40) g.pad_th = v & 0x40; return; }
+    if (a == 0xa10009) { g.pad_ctrl = v; return; }
     if (a >= 0xc00000 && a < 0xc00020) { wr16(a & ~1u, (uint16_t)(v | (v << 8))); return; }   // byte -> both halves
 }
 
@@ -139,7 +150,7 @@ static void sub_ga_wr8(uint32_t a, uint8_t v) {
         return;
     case 0x004: g.cdc_mode = v & 7; g.cdc_dsr = g.cdc_edt = false; return;
     case 0x00e: case 0x00f: g.flag_sub = v; return;
-    case 0x031: g.timer = v; return;
+    case 0x031: g.timer = v; g.timer_due = g.sub.cycles + (int64_t)(v + 1) * 384; return;   // 30.72 us per count
     case 0x033: g.sub_imask = v; return;
     }
     if (r >= 0x20 && r < 0x30) {
@@ -152,7 +163,7 @@ uint8_t SubBus::rd8(uint32_t a) {
     if (a < 0x80000) return g.prg[a];
     if (a < 0xc0000) return g.word[a & 0x3ffff];
     if (a >= 0xfe0000 && a < 0xff0000) return (a & 1) ? g.bram[(a >> 1) & 0x1fff] : 0xff;
-    if (a >= 0xff0000 && a < 0xff8000) return (a & 1) ? g.pcm[(a >> 1) & 0xffff] : 0;
+    if (a >= 0xff0000 && a < 0xff8000) return (a & 1) ? pcm_read(a) : 0;
     if (a >= 0xff8000) { uint16_t w = sub_ga_rd(a); return (a & 1) ? (uint8_t)w : w >> 8; }
     return 0;
 }
@@ -168,7 +179,7 @@ void SubBus::wr8(uint32_t a, uint8_t v) {
     if (a < 0x80000) { g.prg[a] = v; return; }
     if (a < 0xc0000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0xfe0000 && a < 0xff0000) { if (a & 1) g.bram[(a >> 1) & 0x1fff] = v; return; }
-    if (a >= 0xff0000 && a < 0xff8000) { if (a & 1) g.pcm[(a >> 1) & 0xffff] = v; return; }
+    if (a >= 0xff0000 && a < 0xff8000) { if (a & 1) pcm_write(a, v); return; }
     if (a >= 0xff8000) { sub_ga_wr8(a, v); return; }
 }
 
@@ -189,14 +200,29 @@ void SubBus::wr16(uint32_t a, uint16_t v) {
 
 // ---------------------------------------------------------------- boot (what the BIOS does)
 
-bool Scd::boot(const std::string& dir) {
-    game_dir = dir;
-    std::string p = dir + "/track01.iso";
-    cd.iso = fopen(p.c_str(), "rb");
-    if (!cd.iso) { fprintf(stderr, "cannot open %s\n", p.c_str()); return false; }
+bool Scd::boot(const std::string& path) {
     std::vector<uint8_t> head(0x8000);
-    if (fread(head.data(), 1, head.size(), cd.iso) != head.size() || memcmp(head.data(), "SEGADISCSYSTEM", 14)) {
-        fprintf(stderr, "%s is not a Sega CD data track\n", p.c_str());
+    bool cue = path.size() > 4 && (path.compare(path.size() - 4, 4, ".cue") == 0 || path.compare(path.size() - 4, 4, ".CUE") == 0);
+    if (cue) {                                  // the player's disc image, read in place
+        if (!g_disc.open(path)) return false;
+        size_t k = path.find_last_of("/\\");
+        game_dir = k == std::string::npos ? std::string(".") : path.substr(0, k);
+        for (uint32_t s = 0; s < 16; s++) g_disc.read_data(s, &head[s * 2048]);
+        for (auto& t : g_disc.tracks) {
+            if (cd.ntracks >= 100) break;
+            CdHle::Track& c = cd.tracks[cd.ntracks++];
+            c.n = t.n; c.start = (int)t.disc_start; c.len = (int)t.len; c.audio = t.audio;
+        }
+    } else {                                    // development: a folder made by tools/prepare_disc.py
+        game_dir = path;
+        std::string p = path + "/track01.iso";
+        cd.iso = fopen(p.c_str(), "rb");
+        if (!cd.iso) { fprintf(stderr, "cannot open %s\n", p.c_str()); return false; }
+        if (fread(head.data(), 1, head.size(), cd.iso) != head.size()) return false;
+        cd.load_tracks((path + "/tracks.txt").c_str());
+    }
+    if (memcmp(head.data(), "SEGADISCSYSTEM", 14)) {
+        fprintf(stderr, "%s is not a Sega CD disc\n", path.c_str());
         return false;
     }
     memcpy(&wram[0], &head[0x200], 0x6600);     // IP -> $FF0000

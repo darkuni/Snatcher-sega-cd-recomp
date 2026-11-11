@@ -31,7 +31,20 @@ struct CdHle {
     bool fast = false;              // fast loading option
     uint32_t cur = 0;               // sector being handed out
     uint8_t buf[2048];
-    int audio_track = 0;            // CD-DA track playing (0 = none)
+    // CD-DA
+    struct Track { int n = 0, start = 0, len = 0; bool audio = false; };
+    Track tracks[100];
+    int ntracks = 0;
+    int audio_track = 0;            // track playing (0 = none)
+    int play_mode = 0;              // 0 stopped, 1 to end of disc, 2 one track, 3 repeat track
+    bool paused = false;
+    uint32_t play_from = 0;         // disc sector the current stretch started at
+    int64_t play_t0 = 0;            // sub-CPU cycle it started at
+    uint32_t pos = 0;               // current disc sector (updated by cd_update)
+    void load_tracks(const char* path);
+    void play(int track, int mode, int64_t now);
+    void update(int64_t now);       // advance the play position
+    int track_at(uint32_t lba) const;
 };
 
 struct Scd {
@@ -52,7 +65,8 @@ struct Scd {
     bool sub_int2 = false;          // pending level 2 (main -> sub, IFL2)
     uint16_t timer = 0;
     bool vint_pending = false;      // main level 6 (VDP V-blank)
-    int64_t vint_due = 0;           // main cycle at which the V-int fires (just after the V-blank flag rises)
+    int64_t vint_due = 0;
+    int64_t timer_due = 0;          // sub level 3: next timer interrupt (sub cycles)           // main cycle at which the V-int fires (just after the V-blank flag rises)
     uint8_t cdc_mode = 0;           // $FF8004 bits 2-0: CDC destination (2 main read, 3 sub read, 4 PCM, 5 PRG-RAM, 7 word RAM)
     bool cdc_dsr = false, cdc_edt = false;   // data set ready / end of data transfer
     uint16_t dma_addr = 0;          // $FF800A
@@ -71,6 +85,9 @@ struct Scd {
     SubBus sbus;
     Cpu main, sub;
 
+    int cd_volume = 1024, pcm_volume = 1024, fm_volume = 1024;   // 0..1024
+    uint8_t pad = 0;                // buttons held, active high: U D L R B C A Start (bits 0-7)
+    uint8_t pad_th = 0x40, pad_ctrl = 0;   // port 1 data (TH) and control registers
     bool force_interp = false;      // SNATCHER_INTERP=1: run everything in Musashi (debug)
     std::string game_dir;
     std::vector<uint32_t> misses[2];
@@ -86,4 +103,7 @@ static inline void wbe16(uint8_t* p, uint16_t v) { p[0] = v >> 8; p[1] = (uint8_
 
 // HLE BIOS (bios.cpp): returns true if addr is a BIOS entry it handled (the call is complete).
 bool bios_call(Cpu& c, uint32_t addr);
+uint8_t pcm_read(uint32_t a);
+void pcm_write(uint32_t a, uint8_t v);
+void pcm_dma_write(uint32_t off, uint8_t v);
 void cd_tick(int64_t sub_cycles);
