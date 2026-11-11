@@ -43,3 +43,17 @@ Disc: `Snatcher (Sega CD) (U)-redump.bin/.cue`, 625,192,176 bytes. Track 01 MODE
 | DATA_D0 / D1 / Y16 | 1 each | 36 / 36 / 31 |
 IP coverage is low because its interrupt handlers and callbacks are installed at run time; those get
 found by logging misses in the runtime and adding them to `config/functions.txt`.
+
+## Runtime findings
+- BIOS calls used: sub $5F10 (_WAITVSYNC), $5F16 (_BURAM), $5F22 (_CDBIOS: 08 12 20 81 84 89 8A 8B 8C 8D);
+  main $364 (boot check), $368 (set V-int handler, a1 = $FF06C8), $28C (return to BIOS on error).
+- H-int vector ($A12006) = $08E2 -> $FF08E2 (just rte). V-int handler $FF06C8 ends in rte.
+- SP copies $7300-$75CF (720 bytes) through word RAM $B7800; IP copies it to $FFE100 and runs it
+  (jump table: jmp $FFE290, jmp $FFE140, ...).
+- SP's file loader uses the CDC's DMA: $FF8004 = destination (3 sub read via CDCTRN, 5 PRG-RAM,
+  7 word RAM), $FF800A = address >> 3, then CDCREAD and polls $FF8004 bit 7 (EDT).
+- SP's loader is a coroutine: $6986 pops its caller's return address into $922(a5) and returns
+  one level up; $695C resumes it with jmp (a0). Recompiled code handles this by unwinding.
+- Timing: the V-int handler clears main flag bit 1, raises IFL2 (sub level 2) and sets bit 1 again
+  later; the sub's int2 must see bit 1 clear, so the main CPU yields to the sub the moment it raises
+  IFL2 (the real sub answers within microseconds).

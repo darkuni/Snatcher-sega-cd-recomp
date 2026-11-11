@@ -24,7 +24,12 @@ struct Cpu {
     uint32_t ret = 0;            // address an rts/rte returned to (see src/recomp.py)
     int64_t cycles = 0, limit = 0;
     int id = 0;                  // 0 = main CPU, 1 = sub CPU
+    uint32_t dbg_pc = 0;         // last interpreted pc (debug)
     Bus* bus = nullptr;
+    uint32_t expect[512];        // return addresses host callers are waiting for (interpreter fallback)
+    int nexpect = 0;
+    void enter(uint32_t r) { if (nexpect < 512) expect[nexpect] = r; nexpect++; }
+    void leave() { nexpect--; }
 
     // memory (24-bit bus) --------------------------------------------------
     uint32_t rd8(uint32_t ad) { return bus->rd8(ad & 0xffffff); }

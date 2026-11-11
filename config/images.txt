@@ -1,7 +1,9 @@
 # Code images: <cpu> <file> <base hex> <prefix> [entry hex ...]
 # cpu: main (Genesis 68000) or sub (Sega CD 68000). Images on the same CPU that share an address
 # range (the $28000 overlays) are told apart at run time by signature words.
-main IP.bin       ff0000 ip  ff0000 ff0584
+main IP.bin       ff0000 ip  ff0000 ff0584 ff06c8 ff08e2
+# 720 bytes of SP.bin that the sub CPU copies through word RAM; IP runs them at $FFE100
+main SP.bin@1300+2d0 ffe100 spm jmptab
 sub  SP.bin       006000 sp  hdr
 sub  SUBCODE.BIN  00d400 sc  jmptab
 sub  DATA_D0.BIN  028000 d0  ovl

@@ -17,7 +17,10 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
 - [x] Differential test against the Musashi 68000 interpreter (`tools/difftest`): random
       instruction sequences incl. branches, dbcc, divides, movem, link/unlk - 0 differences over
       26,000 sequences x 6 random starting states
-- [ ] Runtime: memory maps, main/sub CPU scheduling, interrupts, BIOS calls
+- [x] Runtime: main/sub memory maps, gate array, CDC DMA, HLE BIOS (CD reads, backup RAM, V-int),
+      main/sub CPU scheduling and interrupts, Musashi fallback that logs unseen code for the next recompile
+- [x] Boots: both CPUs run, the sub CPU loads 91 sectors and hands over to SUBCODE - all recompiled,
+      0 addresses interpreted
 - [ ] Graphics (VDP + graphics ASIC), PCM + FM + CD audio, input, settings menu
 - [ ] Windows and Linux builds
 
@@ -33,9 +36,15 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
 | `tools/dis68k.py`, `tools/findbase.py`, `tools/check_decoder.py` | dev tools (need `pip install capstone`) |
 | `tools/difftest/` | random-instruction differential test against Musashi |
 
-## Building the generated code (dev)
+## Building (dev, headless for now)
 
 ```
 python3 tools/prepare_disc.py "Snatcher (Sega CD) (U)-redump.cue" game
 python3 src/recomp.py game config src/gen
+cmake -S src -B build && cmake --build build
+build/snatcher game 600          # runs 600 frames, writes misses.txt
 ```
+
+Debug switches: `SNATCHER_INTERP=1` runs everything in Musashi; `SNATCHER_INTERP_IMG=IP.bin` or
+`SNATCHER_INTERP_LO/HI=<hex>` interpret one image / address range; `SNATCHER_TRACE_TOP=1` logs
+top-level dispatches. Addresses in `misses.txt` go into `config/functions.txt`.
