@@ -57,3 +57,14 @@ found by logging misses in the runtime and adding them to `config/functions.txt`
 - Timing: the V-int handler clears main flag bit 1, raises IFL2 (sub level 2) and sets bit 1 again
   later; the sub's int2 must see bit 1 clear, so the main CPU yields to the sub the moment it raises
   IFL2 (the real sub answers within microseconds).
+- Main program runs inside the V-int handler: $FF06C8 -> state machine at $FF09F0 indexed by $E022
+  (0 init, 1 intro/logos with sub-steps in $E04A, ...). $E028 guards re-entry; nested V-ints take the
+  short path at $FF0900, which waits for V-blank to end.
+- State code polls VDP status bit 3 (V-blank) at $FF2D34. The V-blank flag must rise before the V-int is
+  taken (as on hardware) or the poll never sees it - the runtime delays the V-int ~120 cycles.
+- SUBCODE installs a level-3 (timer) handler: $D48E written to the BIOS jump table at $5F84, level 3
+  enabled with ori #8,$FF8032 - it drives the sound driver ($15106).
+- The RAM routine at $FFE100 (from SP) calls $FFFDAE with d0=0 (BRMINIT), a0 work RAM, a1 strings:
+  the main BIOS's RAM-cartridge backup RAM call. The runtime reports no cartridge (carry set).
+- Intro: licence text -> green scanner line -> Konami logo (512-frame timer, jingle $10203 via $FF19F2)
+  -> fade -> CD-DA track 2. The next part waits on the CD audio play position.

@@ -78,7 +78,13 @@ static bool sub_runs() { return !g.sub_reset && !g.sub_busreq; }
 static void hw_line() {         // called with s_mtx held, once both CPUs finished the line
     g.main.limit += MAIN_LINE;
     g.sub.limit += SUB_LINE;
-    if (++g.line == 224 && g.vdp.vint_enabled()) g.vint_pending = true;
+    if (g.line < g.vdp.height()) g.vdp.render_line(g.line);
+    if (++g.line == g.vdp.height()) {
+        g.vdp.vint_flag = true;
+        // V-blank status rises at the start of the line; the 68000 takes the V-int a little later,
+        // and code polling the status bit relies on seeing it first
+        if (g.vdp.vint_enabled()) { g.vint_pending = true; g.vint_due = g.main.limit - MAIN_LINE + 120; }
+    }
     if (g.line == 262) {
         g.line = 0;
         g.frame++;
@@ -98,7 +104,23 @@ void yield_to_sub() {
     s_cv.wait(lk, [] { return s_turn == CPU_MAIN; });
 }
 
+#include <map>
+static std::map<uint32_t, uint32_t> s_prof[2];
+static const bool s_profile = getenv("SNATCHER_PROFILE") != nullptr;
+void print_profile() {
+    for (int c = 0; c < 2; c++) {
+        std::multimap<uint32_t, uint32_t> top;
+        for (auto& kv : s_prof[c]) top.insert({kv.second, kv.first});
+        int n = 0;
+        fprintf(stderr, "%s loops:", c ? "sub" : "main");
+        for (auto it = top.rbegin(); it != top.rend() && n < 8; ++it, ++n) fprintf(stderr, " %06x(%u)", it->second, it->first);
+        fprintf(stderr, "\n");
+    }
+}
+
 bool Cpu::sync(uint32_t resume) {
+    dbg_pc = resume;
+    if (s_profile) s_prof[id][resume]++;
     if (cycles < limit) cycles = limit;         // idle for the rest of this line
     {
         std::unique_lock<std::mutex> lk(s_mtx);
@@ -139,13 +161,19 @@ static bool deliver(Cpu& c, int level, uint32_t handler, uint32_t resume, bool b
         c.jump(handler);
     }
     c.leave();
+    if (c.ret != resume && getenv("SNATCHER_DBG")) {
+        static int n = 0;
+        if (n++ < 10) fprintf(stderr, "[%s] level %d interrupt at %06x returned to %06x (frame %llu line %d)\n",
+                              c.id ? "sub" : "main", level, resume, c.ret, (unsigned long long)g.frame, g.line);
+    }
     return c.ret == resume;
 }
 
 static bool take_interrupt(Cpu& c, uint32_t resume) {
     if (c.id == CPU_MAIN) {
-        if (g.vint_pending && c.imask < 6 && g.main_vint) {
+        if (g.vint_pending && c.imask < 6 && g.main_vint && c.cycles >= g.vint_due) {
             g.vint_pending = false;
+            g.vdp.vint_flag = false;
             g.n_vint++;
             return deliver(c, 6, g.main_vint, resume, false);
         }

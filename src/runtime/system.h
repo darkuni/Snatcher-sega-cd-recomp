@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "m68k.h"
+#include "vdp.h"
 
 enum { CPU_MAIN = 0, CPU_SUB = 1 };
 
@@ -19,17 +20,6 @@ struct SubBus : Bus {
     uint16_t rd16(uint32_t a) override;
     void wr8(uint32_t a, uint8_t v) override;
     void wr16(uint32_t a, uint16_t v) override;
-};
-
-// Minimal VDP stand-in until the real one (step 4): registers, status, V-int timing.
-struct VdpStub {
-    uint8_t reg[32] = {};
-    bool pending = false;       // first half of a two-word command
-    uint16_t first = 0;
-    uint16_t status(int line) const { return 0x3600 | (line >= 224 ? 8 : 0); }
-    void ctrl(uint16_t v);
-    bool vint_enabled() const { return reg[1] & 0x20; }
-    bool hint_enabled() const { return reg[0] & 0x10; }
 };
 
 // CD drive / CDC as the BIOS presents it (HLE): ROMREADN feeds sectors at 75/s.
@@ -62,17 +52,18 @@ struct Scd {
     bool sub_int2 = false;          // pending level 2 (main -> sub, IFL2)
     uint16_t timer = 0;
     bool vint_pending = false;      // main level 6 (VDP V-blank)
+    int64_t vint_due = 0;           // main cycle at which the V-int fires (just after the V-blank flag rises)
     uint8_t cdc_mode = 0;           // $FF8004 bits 2-0: CDC destination (2 main read, 3 sub read, 4 PCM, 5 PRG-RAM, 7 word RAM)
     bool cdc_dsr = false, cdc_edt = false;   // data set ready / end of data transfer
     uint16_t dma_addr = 0;          // $FF800A
-    uint32_t n_vint = 0, n_int2 = 0, n_ifl2 = 0, n_sectors = 0;   // debug counters
+    uint32_t n_vint = 0, n_int2 = 0, n_ifl2 = 0, n_sectors = 0, n_dmna = 0, n_ret = 0;   // debug counters
 
     // HLE BIOS state
     uint32_t main_vint = 0;         // level 6 handler given to BIOS $368
     uint32_t sp_entry[4] = {};      // SP module: init, main, int2, user
     CdHle cd;
 
-    VdpStub vdp;
+    Vdp vdp;
     int line = 0;                   // current scanline (0..261)
     uint64_t frame = 0;
 

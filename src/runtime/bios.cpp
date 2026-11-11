@@ -1,5 +1,6 @@
 // HLE replacements for the Sega CD BIOS entry points Snatcher uses.
-//   main CPU: $364 (boot security check), $368 (set V-int handler), $28C (return to BIOS)
+//   main CPU: $364 (boot security check), $368 (set V-int handler), $28C (return to BIOS),
+//             $FFFDAE (RAM cartridge backup RAM - reports no cartridge)
 //   sub CPU:  $5F10 _WAITVSYNC, $5F16 _BURAM, $5F22 _CDBIOS
 #include <cstring>
 #include <map>
@@ -195,9 +196,14 @@ bool bios_call(Cpu& c, uint32_t addr) {
         switch (addr) {
         case 0x000364: break;                                  // boot security check
         case 0x000368: g.main_vint = c.a[1]; break;            // set V-int handler
+        case 0xfffdae:                                         // backup RAM cartridge calls: none present
+            c.c = true;
+            c.d[1] = 0;
+            break;
         case 0x00028c:
             fprintf(stderr, "[main] game returned to the BIOS ($28C) - stopping\n");
-            exit(1);
+            fflush(stderr);
+            _Exit(1);
         default: return false;
         }
     } else {

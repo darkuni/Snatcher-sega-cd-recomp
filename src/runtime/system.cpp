@@ -5,17 +5,13 @@
 Scd g;
 void yield_to_sub();
 
-void VdpStub::ctrl(uint16_t v) {
-    if (pending) { pending = false; return; }
-    if ((v & 0xc000) == 0x8000) { reg[(v >> 8) & 0x1f] = (uint8_t)v; return; }
-    pending = true;
-    first = v;
-}
-
 void Scd::log_miss(int cpu, uint32_t pc) {
     for (uint32_t a : misses[cpu]) if (a == pc) return;
     misses[cpu].push_back(pc);
-    fprintf(stderr, "[%s] no recompiled code at %06x (interpreting)\n", cpu ? "sub" : "main", pc);
+    Cpu& c = cpu ? sub : main;
+    fprintf(stderr, "[%s] no recompiled code at %06x (interpreting)  a7=%06x [%08x %08x %08x %08x] expect top %06x\n",
+            cpu ? "sub" : "main", pc, c.a[7], c.rd32(c.a[7]), c.rd32(c.a[7] + 4), c.rd32(c.a[7] + 8), c.rd32(c.a[7] + 12),
+            c.nexpect > 0 && c.nexpect <= 512 ? c.expect[c.nexpect - 1] : 0);
 }
 
 // ---------------------------------------------------------------- main CPU
@@ -44,7 +40,7 @@ static void main_ga_wr8(uint32_t a, uint8_t v) {
     case 0x02: g.prg_protect = v; return;
     case 0x03:
         g.prg_bank = (v >> 6) & 3;
-        if (v & 2) { g.dmna = true; if (!g.mode1m) g.ret = false; }   // give 2M word RAM to the sub CPU
+        if (v & 2) { g.dmna = true; if (!g.mode1m) g.ret = false; g.n_dmna++; }   // give 2M word RAM to the sub CPU
         return;
     case 0x06: g.hint_vec = (g.hint_vec & 0xff) | (v << 8); return;
     case 0x07: g.hint_vec = (g.hint_vec & 0xff00) | v; return;
@@ -75,9 +71,12 @@ uint16_t MainBus::rd16(uint32_t a) {
     if (a >= 0x020000 && a < 0x040000) return be16(&g.prg[(g.prg_bank << 17) | (a & 0x1ffff)]);
     if (a >= 0xa12000 && a < 0xa12040) return main_ga_rd(a);
     if (a >= 0xc00000 && a < 0xc00020) {
-        if ((a & 0x1c) == 0x04) return g.vdp.status(g.line);
-        if ((a & 0x1c) == 0x08) return (g.line & 0xff) << 8;
-        return 0;
+        switch (a & 0x1c) {
+        case 0x00: return g.vdp.data_read();
+        case 0x04: { uint16_t s = g.vdp.status(g.line); g.vdp.pending = false; return s; }
+        case 0x08: return ((g.line > 0xea ? g.line - 6 : g.line) & 0xff) << 8 | ((g.main.cycles & 0x3ff) >> 2);
+        }
+        return 0xffff;
     }
     if (a == 0xa11100) return 0;                // Z80 bus granted
     return (rd8(a) << 8) | rd8(a + 1);
@@ -88,13 +87,15 @@ void MainBus::wr8(uint32_t a, uint8_t v) {
     if (a >= 0x200000 && a < 0x240000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0x020000 && a < 0x040000) { g.prg[(g.prg_bank << 17) | (a & 0x1ffff)] = v; return; }
     if (a >= 0xa12000 && a < 0xa12040) { main_ga_wr8(a, v); return; }
+    if (a >= 0xc00000 && a < 0xc00020) { wr16(a & ~1u, (uint16_t)(v | (v << 8))); return; }   // byte -> both halves
 }
 
 void MainBus::wr16(uint32_t a, uint16_t v) {
     if (a >= 0xff0000) { wbe16(&g.wram[a & 0xffff], v); return; }
     if (a >= 0x200000 && a < 0x240000) { wbe16(&g.word[a & 0x3ffff], v); return; }
     if (a >= 0xc00000 && a < 0xc00020) {
-        if ((a & 0x1c) == 0x04) g.vdp.ctrl(v);
+        if ((a & 0x1c) == 0x00) g.vdp.data_write(v);
+        else if ((a & 0x1c) == 0x04) g.vdp.ctrl_write(v);
         return;
     }
     if (a >= 0xa12000 && a < 0xa12040) {
@@ -134,7 +135,7 @@ static void sub_ga_wr8(uint32_t a, uint8_t v) {
     switch (r) {
     case 0x003:
         g.mode1m = v & 4;
-        if (v & 1) { g.ret = true; g.dmna = false; }    // hand 2M word RAM back to the main CPU
+        if (v & 1) { g.ret = true; g.dmna = false; g.n_ret++; }    // hand 2M word RAM back to the main CPU
         return;
     case 0x004: g.cdc_mode = v & 7; g.cdc_dsr = g.cdc_edt = false; return;
     case 0x00e: case 0x00f: g.flag_sub = v; return;
@@ -204,6 +205,7 @@ bool Scd::boot(const std::string& dir) {
     uint32_t tab = 0x6000 + ((prg[0x6018] << 24) | (prg[0x6019] << 16) | (prg[0x601a] << 8) | prg[0x601b]);
     for (int k = 0; k < 4; k++) sp_entry[k] = tab + be16(&prg[tab + 2 * k]);
     fprintf(stderr, "SP entries: init %06x main %06x int2 %06x user %06x\n", sp_entry[0], sp_entry[1], sp_entry[2], sp_entry[3]);
+    vdp.reset();
     main.bus = &mbus; main.id = CPU_MAIN;
     sub.bus = &sbus; sub.id = CPU_SUB;
     main.set_sr(0x2700); main.a[7] = 0xfffd00;

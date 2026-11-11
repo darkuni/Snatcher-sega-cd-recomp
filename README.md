@@ -21,7 +21,11 @@ graphics ASIC, PCM, FM, CD drive and CD audio) is the next stage. Targets: Windo
       main/sub CPU scheduling and interrupts, Musashi fallback that logs unseen code for the next recompile
 - [x] Boots: both CPUs run, the sub CPU loads 91 sectors and hands over to SUBCODE - all recompiled,
       0 addresses interpreted
-- [ ] Graphics (VDP + graphics ASIC), PCM + FM + CD audio, input, settings menu
+- [x] VDP: ports, DMA (68k incl. word RAM, fill, copy), planes A/B, window, sprites, priority,
+      per-line/cell scrolling - the licence screen, scanner line and Konami logo render correctly
+      (Snatcher does not use the Sega CD graphics ASIC)
+- [ ] CD audio playback position (the intro is timed to it), PCM + FM + CD audio output
+- [ ] SDL window, input, settings menu
 - [ ] Windows and Linux builds
 
 ## Layout
@@ -43,8 +47,9 @@ python3 tools/prepare_disc.py "Snatcher (Sega CD) (U)-redump.cue" game
 python3 src/recomp.py game config src/gen
 cmake -S src -B build && cmake --build build
 build/snatcher game 600          # runs 600 frames, writes misses.txt
+SNATCHER_DUMP=60 build/snatcher game 1200   # also writes frame_NNNNN.ppm every 60 frames
 ```
 
 Debug switches: `SNATCHER_INTERP=1` runs everything in Musashi; `SNATCHER_INTERP_IMG=IP.bin` or
 `SNATCHER_INTERP_LO/HI=<hex>` interpret one image / address range; `SNATCHER_TRACE_TOP=1` logs
-top-level dispatches. Addresses in `misses.txt` go into `config/functions.txt`.
+top-level dispatches; `SNATCHER_PROFILE=1` prints the loops each CPU waits in. Addresses in `misses.txt` go into `config/functions.txt`.
