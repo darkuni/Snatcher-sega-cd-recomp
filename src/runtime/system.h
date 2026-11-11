@@ -53,6 +53,7 @@ struct Scd {
     uint8_t word[0x40000];          // word RAM
     uint8_t pcm[0x10000];           // PCM wave RAM
     uint8_t bram[0x2000];           // backup RAM (BURAM HLE)
+    uint8_t z80ram[0x2000];         // Z80 RAM ($A00000): Snatcher keeps FM music data there
 
     // gate array
     bool sub_reset = true, sub_busreq = true;
@@ -104,6 +105,8 @@ static inline void wbe16(uint8_t* p, uint16_t v) { p[0] = v >> 8; p[1] = (uint8_
 // HLE BIOS (bios.cpp): returns true if addr is a BIOS entry it handled (the call is complete).
 bool bios_call(Cpu& c, uint32_t addr);
 uint8_t pcm_read(uint32_t a);
+uint8_t fm_read(uint32_t a);
+void fm_write(uint32_t a, uint8_t v);
 void pcm_write(uint32_t a, uint8_t v);
 void pcm_dma_write(uint32_t off, uint8_t v);
 void cd_tick(int64_t sub_cycles);

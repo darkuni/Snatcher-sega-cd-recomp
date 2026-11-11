@@ -51,11 +51,11 @@ static void dump_frame() {
 }
 
 extern uint32_t g_pcm_writes, g_pcm_on;
-extern uint32_t g_fm_writes;
+extern uint32_t g_fm_writes, g_psg_writes;
 static void headless_report() {
     if (g.frame % 60 == 0)
-        fprintf(stderr, "frame %llu  vint %u int2 %u sectors %u  cd track %d pos %u  pcm w%u on%u fm w%u  main loop %06x sub loop %06x\n",
-                (unsigned long long)g.frame, g.n_vint, g.n_int2, g.n_sectors, g.cd.audio_track, g.cd.pos, g_pcm_writes, g_pcm_on, g_fm_writes,
+        fprintf(stderr, "frame %llu  vint %u int2 %u sectors %u  cd track %d pos %u  pcm w%u on%u fm w%u psg w%u  main loop %06x sub loop %06x\n",
+                (unsigned long long)g.frame, g.n_vint, g.n_int2, g.n_sectors, g.cd.audio_track, g.cd.pos, g_pcm_writes, g_pcm_on, g_fm_writes, g_psg_writes,
                 g.main.dbg_pc, g.sub.dbg_pc);
     if (g.frame < s_frames) return;
     FILE* f = fopen("misses.txt", "w");

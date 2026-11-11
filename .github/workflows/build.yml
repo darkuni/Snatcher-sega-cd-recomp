@@ -55,7 +55,7 @@ jobs:
             F11                 fullscreen (Esc leaves it)
 
           Saves (backup RAM) are written to snatcher.brm next to the disc image.
-          Not done yet: FM music/effects, settings menu.
+          Not done yet: settings menu.
           TXT
           sed -i 's/^          //' dist/README.txt
 
@@ -102,7 +102,7 @@ jobs:
 
           Controls: d-pad / arrows move, A or C/Space select, B or X cancel, X or Z draws the
           Blaster, Start / Enter. F11 fullscreen.
-          Not done yet: FM music/effects, settings menu.
+          Not done yet: settings menu.
           TXT
           sed -i 's/^          //' dist/snatcher/README.txt
           tar czf snatcher-linux-x86_64.tar.gz -C dist snatcher

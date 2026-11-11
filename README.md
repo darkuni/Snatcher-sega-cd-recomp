@@ -30,7 +30,7 @@ Put it next to the program (or in a `game` folder) and run it, or pass the `.cue
 - [x] RF5C164 PCM chip (voices), sub-CPU timer interrupt (drives the sound driver)
 - [x] SDL2 window (4:3, F11 fullscreen), keyboard + controller, 59.92 Hz pacing
 - [x] Reaches the title screen and menus
-- [ ] FM (YM2612) - the game drives it from the main CPU; needs an OPN2 core
+- [x] FM (YM2612 via ymfm), driven from the main CPU; Z80 RAM (the game keeps music data there)
 - [ ] Settings menu, save location, longer play-testing
 - [x] Windows and Linux CI builds (`.github/workflows/build.yml`)
 

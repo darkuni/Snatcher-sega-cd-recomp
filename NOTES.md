@@ -75,3 +75,6 @@ found by logging misses in the runtime and adding them to `config/functions.txt`
   the MAIN CPU directly ($A04000/$A04002, ~1000 writes during the Konami jingle) - no Z80 driver.
   PCM wave RAM is filled at boot; channels start in voiced scenes.
 - Controls (Options screen): A draws the Blaster, B cancels, C selects/shoots.
+- FM data: at the start of the intro IP $FF56AE copies word RAM $200000-$201DFF (start of FMWR_1) into
+  Z80 RAM $A00000 and $201E00-$202845 to $FF9000. The Z80 is never run - its RAM is just storage the
+  main CPU's FM driver reads music data back from. PSG ($C00011) only gets 4 writes (silencing).

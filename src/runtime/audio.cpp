@@ -68,4 +68,5 @@ void audio_frame(std::vector<int16_t>& out) {
         for (auto& s : out) s = (int16_t)(s * vol / 1024);
     }
     pcm_mix(out);
+    fm_mix(out);
 }

@@ -12,10 +12,12 @@ file(GLOB RT runtime/*.cpp)
 add_library(musashi STATIC third_party/musashi/m68kcpu.c third_party/musashi/m68kops.c
             third_party/musashi/m68kdasm.c third_party/musashi/softfloat/softfloat.c)
 target_include_directories(musashi PUBLIC third_party/musashi)
+add_library(ymfm STATIC third_party/ymfm/ymfm_opn.cpp third_party/ymfm/ymfm_adpcm.cpp third_party/ymfm/ymfm_ssg.cpp)
+target_compile_options(ymfm PRIVATE -w)
 set_source_files_properties(${GEN} PROPERTIES COMPILE_OPTIONS "-Wno-unused-label;-Wno-unused-variable")
 add_executable(snatcher ${RT} ${GEN})
 target_include_directories(snatcher PRIVATE runtime)
-target_link_libraries(snatcher PRIVATE musashi Threads::Threads)
+target_link_libraries(snatcher PRIVATE musashi ymfm Threads::Threads)
 
 if(USE_SDL)
   target_compile_definitions(snatcher PRIVATE USE_SDL)

@@ -5,7 +5,7 @@
 
 Scd g;
 void yield_to_sub();
-uint32_t g_fm_writes = 0;
+uint32_t g_fm_writes = 0, g_psg_writes = 0;
 
 void Scd::log_miss(int cpu, uint32_t pc) {
     for (uint32_t a : misses[cpu]) if (a == pc) return;
@@ -62,6 +62,8 @@ uint8_t MainBus::rd8(uint32_t a) {
     if (a >= 0x020000 && a < 0x040000) return g.prg[(g.prg_bank << 17) | (a & 0x1ffff)];
     if (a >= 0xa12000 && a < 0xa12040) { uint16_t w = main_ga_rd(a); return (a & 1) ? (uint8_t)w : w >> 8; }
     if (a >= 0xc00000 && a < 0xc00020) { uint16_t w = rd16(a & ~1); return (a & 1) ? (uint8_t)w : w >> 8; }
+    if (a >= 0xa00000 && a < 0xa04000) return g.z80ram[a & 0x1fff];
+    if (a >= 0xa04000 && a < 0xa04004) return fm_read(a);
     if (a == 0xa10001) return 0x80;             // overseas, NTSC, expansion (Sega CD) present
     if (a == 0xa10003) {                        // 3-button pad, port 1 (buttons active low)
         uint8_t p = g.pad, th = g.pad_th & 0x40;
@@ -95,7 +97,9 @@ void MainBus::wr8(uint32_t a, uint8_t v) {
     if (a >= 0x200000 && a < 0x240000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0x020000 && a < 0x040000) { g.prg[(g.prg_bank << 17) | (a & 0x1ffff)] = v; return; }
     if (a >= 0xa12000 && a < 0xa12040) { main_ga_wr8(a, v); return; }
-    if (a >= 0xa04000 && a < 0xa04004) { g_fm_writes++; return; }
+    if (a >= 0xa00000 && a < 0xa04000) { g.z80ram[a & 0x1fff] = v; return; }
+    if (a >= 0xa04000 && a < 0xa04004) { g_fm_writes++; fm_write(a, v); return; }
+    if (a == 0xc00011) { g_psg_writes++; return; }
     if (a == 0xa10003) { if (g.pad_ctrl & 0x40) g.pad_th = v & 0x40; return; }
     if (a == 0xa10009) { g.pad_ctrl = v; return; }
     if (a >= 0xc00000 && a < 0xc00020) { wr16(a & ~1u, (uint16_t)(v | (v << 8))); return; }   // byte -> both halves
