@@ -112,3 +112,29 @@ jobs:
         with:
           name: snatcher-linux-x86_64
           path: snatcher-linux-x86_64.tar.gz
+
+  release:
+    # tag push (v*): publish the Windows and Linux packages as a GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: pkg
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          (cd pkg/snatcher-win64 && zip -qr ../../snatcher-${GITHUB_REF_NAME}-win64.zip .)
+          cp pkg/snatcher-linux-x86_64/snatcher-linux-x86_64.tar.gz snatcher-${GITHUB_REF_NAME}-linux-x86_64.tar.gz
+          gh release create "$GITHUB_REF_NAME" --title "Snatcher recomp $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md --prerelease \
+            snatcher-${GITHUB_REF_NAME}-win64.zip snatcher-${GITHUB_REF_NAME}-linux-x86_64.tar.gz
