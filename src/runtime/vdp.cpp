@@ -2,6 +2,7 @@
 // (planes A/B with full/cell/line H-scroll and full/2-cell V-scroll, window plane, sprites,
 // layer priority). Shadow/highlight is not implemented yet.
 #include "vdp.h"
+#include <cstdlib>
 #include <cstring>
 #include "system.h"
 
@@ -21,6 +22,12 @@ uint16_t Vdp::status(int line) const {
 }
 
 void Vdp::ctrl_write(uint16_t v) {
+    {
+        static const char* cl = getenv("SNATCHER_CTRLLOG");
+        static int n = 0;
+        if (cl && g.frame == (uint64_t)atoi(cl) && n++ < 60)
+            fprintf(stderr, "ctrl %04x pending=%d line %d\n", v, pending, g.line);
+    }
     if (!pending) {
         if ((v & 0xc000) == 0x8000) {               // register write
             int r = (v >> 8) & 0x1f;
@@ -57,6 +64,17 @@ void Vdp::write_target(uint16_t v) {
 
 void Vdp::data_write(uint16_t v) {
     pending = false;
+    {
+        static const char* wl = getenv("SNATCHER_VWLOG");
+        if (wl && (code & 15) == 1 && addr < 0xf800 && g.frame >= (uint64_t)atoi(wl) && g.frame < (uint64_t)atoi(wl) + 120) {
+            static uint64_t lf = 0; static uint32_t first = 0, last = 0, n = 0;
+            if (g.frame != lf || addr != ((last + reg[15]) & 0xffff)) {
+                if (n) fprintf(stderr, "vram f%llu %04x..%04x (%u words)\n", (unsigned long long)lf, first, last, n);
+                first = addr; n = 0; lf = g.frame;
+            }
+            last = addr; n++;
+        }
+    }
     if (fill_pending) {                              // DMA fill: write the word, then fill with its high byte
         fill_pending = false;
         write_target(v);
@@ -98,6 +116,15 @@ void Vdp::do_dma() {
         }
     } else {                                         // 68k memory -> VDP (words)
         uint32_t src = ((reg[21] | (reg[22] << 8) | ((reg[23] & 0x7f) << 16)) << 1) & 0xffffff;
+        if (getenv("SNATCHER_DMAFILL") && src >= 0x200000 && src < 0x240000 && (code & 15) == 1 && addr < 0x8000) {
+            int nz = 0; for (uint32_t k = 0; k < len * 2; k++) nz += g.word[(src - 2 + k) & 0x3ffff] != 0;
+            fprintf(stderr, "dma f%llu line %d word %06x -> vram %04x len %u: %d nonzero bytes (ret=%d dmna=%d sub loop %06x)\n",
+                    (unsigned long long)g.frame, g.line, src, addr, len, nz, g.ret, g.dmna, g.sub.dbg_pc);
+        }
+        static const char* dl = getenv("SNATCHER_DMALOG");
+        if (dl && g.frame >= (uint64_t)atoi(dl) && g.frame < (uint64_t)atoi(dl) + 40)
+            fprintf(stderr, "dma f%llu line %d src %06x -> %s %04x len %u (ret=%d dmna=%d)\n", (unsigned long long)g.frame, g.line, src,
+                    (code & 15) == 1 ? "vram" : (code & 15) == 3 ? "cram" : "vsram", addr, len, g.ret, g.dmna);
         // Sega CD: DMA from word RAM delivers each word one slot late - games add 2 to the source
         bool wordram = src >= 0x200000 && src < 0x240000;
         for (uint32_t k = 0; k < len; k++) {

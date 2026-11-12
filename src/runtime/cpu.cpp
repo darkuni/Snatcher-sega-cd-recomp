@@ -48,9 +48,19 @@ GuestFn find_fn(Cpu& c, uint32_t a) {
     return nullptr;
 }
 
+// The sub BIOS level 2 handler saves d0-a6 around the module's int2 routine.
+static void int2_save(Cpu& c) {
+    for (int k = 6; k >= 0; k--) c.push32(c.a[k]);
+    for (int k = 7; k >= 0; k--) c.push32(c.d[k]);
+}
+static void int2_restore(Cpu& c) {
+    for (int k = 0; k < 8; k++) { c.d[k] = c.rd32(c.a[7]); c.a[7] += 4; }
+    for (int k = 0; k < 7; k++) { c.a[k] = c.rd32(c.a[7]); c.a[7] += 4; }
+}
+
 void Cpu::jump(uint32_t t) {
     t &= 0xffffff;
-    if (id == CPU_SUB && t == INT2_RET) { rte(); return; }
+    if (id == CPU_SUB && t == INT2_RET) { int2_restore(*this); rte(); return; }
     if (id == CPU_SUB && t == BIOS_RET) {
         push32(BIOS_RET);
         enter(BIOS_RET);
@@ -83,7 +93,11 @@ static void hw_line() {         // called with s_mtx held, once both CPUs finish
         // H-int counter: counts down each active line, fires and reloads from reg 10 when it underflows
         if (--g.hcount < 0) {
             g.hcount = g.vdp.reg[10];
-            if (g.vdp.hint_enabled()) g.hint_pending = true;
+            if (g.vdp.hint_enabled()) {
+                if (g.hint_pending && getenv("SNATCHER_HINTLOG") && g.frame == (uint64_t)atoi(getenv("SNATCHER_HINTLOG")))
+                    fprintf(stderr, "hint LOST at line %d (main imask %d)\n", g.line, g.main.imask);
+                g.hint_pending = true;
+            }
         }
     } else {
         g.hcount = g.vdp.reg[10];              // reloaded every line during V-blank
@@ -160,12 +174,13 @@ static bool deliver(Cpu& c, int level, uint32_t handler, uint32_t resume, bool b
     c.push32(resume);
     c.push16(sr);
     c.enter(resume);
-    if (bios_wrap) {        // the sub BIOS calls the module's int2 routine as a subroutine, then rte
+    if (bios_wrap) {        // the sub BIOS saves d0-a6, calls the module's int2 routine as a subroutine, restores, then rte
+        int2_save(c);
         c.push32(INT2_RET);
         c.enter(INT2_RET);
         c.jump(handler);
         c.leave();
-        if (c.ret == INT2_RET) c.rte();
+        if (c.ret == INT2_RET) { int2_restore(c); c.rte(); }
     } else {
         c.jump(handler);
     }
@@ -188,6 +203,9 @@ static bool take_interrupt(Cpu& c, uint32_t resume) {
         }
         if (g.hint_pending && c.imask < 4) {
             g.hint_pending = false;
+            if (getenv("SNATCHER_HINTLOG") && g.frame == (uint64_t)atoi(getenv("SNATCHER_HINTLOG")))
+                fprintf(stderr, "hint taken line %d (vec %04x, $e034=%04x $e064=%04x imask %d)\n", g.line, g.hint_vec,
+                        be16(&g.wram[0xe034]), be16(&g.wram[0xe064]), c.imask);
             // Sega CD: the level 4 vector points at $FFxxxx, low word from $A12006
             return deliver(c, 4, 0xff0000 | g.hint_vec, resume, false);
         }

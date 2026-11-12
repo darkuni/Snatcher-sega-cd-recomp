@@ -51,6 +51,8 @@ static void main_ga_wr8(uint32_t a, uint8_t v) {
     case 0x0f: g.flag_main = v; return;         // byte write to the low half also lands in the main flag
     }
     uint32_t r = a & 0x3f;
+    if (getenv("SNATCHER_COMMLOG") && g.frame >= (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) && g.frame < (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) + 8 && r >= 0x10 && r < 0x20)
+        fprintf(stderr, "main f%llu l%d cmd[%02x]=%02x\n", (unsigned long long)g.frame, g.line, r, v);
     if (r >= 0x10 && r < 0x20) {
         uint16_t& w = g.cmd[(r - 0x10) >> 1];
         w = (r & 1) ? (w & 0xff00) | v : (w & 0xff) | (v << 8);
@@ -121,7 +123,11 @@ void MainBus::wr16(uint32_t a, uint16_t v) {
         if (r == 0x00) { main_ga_wr8(a, v >> 8); main_ga_wr8(a + 1, (uint8_t)v); return; }
         if (r == 0x06) { g.hint_vec = v; return; }
         if (r == 0x0e) { g.flag_main = v >> 8; return; }
-        if (r >= 0x10 && r < 0x20) { g.cmd[(r - 0x10) >> 1] = v; return; }
+        if (r >= 0x10 && r < 0x20) {
+            if (getenv("SNATCHER_COMMLOG") && g.frame >= (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) && g.frame < (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) + 8)
+                fprintf(stderr, "main f%llu l%d cmdw[%02x]=%04x\n", (unsigned long long)g.frame, g.line, r, v);
+            g.cmd[(r - 0x10) >> 1] = v; return;
+        }
         main_ga_wr8(a, v >> 8);
         main_ga_wr8(a + 1, (uint8_t)v);
         return;
@@ -161,6 +167,8 @@ static void sub_ga_wr8(uint32_t a, uint8_t v) {
     case 0x031: g.timer = v; g.timer_due = g.sub.cycles + (int64_t)(v + 1) * 384; return;   // 30.72 us per count
     case 0x033: g.sub_imask = v; return;
     }
+    if (getenv("SNATCHER_COMMLOG") && g.frame >= (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) && g.frame < (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) + 8 && r >= 0x20 && r < 0x30)
+        fprintf(stderr, "sub  f%llu l%d stat[%02x]=%02x\n", (unsigned long long)g.frame, g.line, r, v);
     if (r >= 0x20 && r < 0x30) {
         uint16_t& w = g.stat[(r - 0x20) >> 1];
         w = (r & 1) ? (w & 0xff00) | v : (w & 0xff) | (v << 8);
@@ -183,8 +191,15 @@ uint16_t SubBus::rd16(uint32_t a) {
     return (rd8(a) << 8) | rd8(a + 1);
 }
 
+static uint32_t sw_lo = 1, sw_hi = 0;
+static void swatch(uint32_t a, uint32_t v, int sz) {
+    static bool init = false;
+    if (!init) { init = true; if (const char* e = getenv("SNATCHER_SWATCH")) sscanf(e, "%x-%x", &sw_lo, &sw_hi); }
+    if (a + sz > sw_lo && a <= sw_hi)
+        fprintf(stderr, "[sw] f%llu %06x=%0*x pc %06x\n", (unsigned long long)g.frame, a, sz * 2, v, g.sub.dbg_pc);
+}
 void SubBus::wr8(uint32_t a, uint8_t v) {
-    if (a < 0x80000) { g.prg[a] = v; return; }
+    if (a < 0x80000) { swatch(a, v, 1); g.prg[a] = v; return; }
     if (a < 0xc0000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0xfe0000 && a < 0xff0000) { if (a & 1) g.bram[(a >> 1) & 0x1fff] = v; return; }
     if (a >= 0xff0000 && a < 0xff8000) { if (a & 1) pcm_write(a, v); return; }
@@ -192,7 +207,7 @@ void SubBus::wr8(uint32_t a, uint8_t v) {
 }
 
 void SubBus::wr16(uint32_t a, uint16_t v) {
-    if (a < 0x80000) { wbe16(&g.prg[a], v); return; }
+    if (a < 0x80000) { swatch(a, v, 2); wbe16(&g.prg[a], v); return; }
     if (a < 0xc0000) { wbe16(&g.word[a & 0x3ffff], v); return; }
     if (a >= 0xff8000) {
         uint32_t r = a & 0x1ff;
@@ -200,7 +215,11 @@ void SubBus::wr16(uint32_t a, uint16_t v) {
         if (r == 0x00e) { g.flag_sub = (uint8_t)v; return; }
         if (r == 0x00a) { g.dma_addr = v; return; }
         if (r == 0x004) { sub_ga_wr8(a, v >> 8); return; }
-        if (r >= 0x20 && r < 0x30) { g.stat[(r - 0x20) >> 1] = v; return; }
+        if (r >= 0x20 && r < 0x30) {
+            if (getenv("SNATCHER_COMMLOG") && g.frame >= (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) && g.frame < (uint64_t)atoi(getenv("SNATCHER_COMMLOG")) + 8)
+                fprintf(stderr, "sub  f%llu l%d statw[%02x]=%04x\n", (unsigned long long)g.frame, g.line, r, v);
+            g.stat[(r - 0x20) >> 1] = v; return;
+        }
     }
     wr8(a, v >> 8);
     wr8(a + 1, (uint8_t)v);

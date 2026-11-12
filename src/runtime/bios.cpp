@@ -229,6 +229,10 @@ static std::string bram_name(Cpu& c) {
 static void buram(Cpu& c) {
     bram_load();
     uint32_t fn = c.d[0] & 0xffff;
+    if (getenv("SNATCHER_BRAMLOG")) {
+        char nm[12] = {}; for (int k = 0; k < 11; k++) nm[k] = (char)c.rd8(c.a[0] + k);
+        fprintf(stderr, "[bram] f%llu fn %u a0=%06x name '%s' a1=%06x d1=%08x\n", (unsigned long long)g.frame, fn, c.a[0], fn >= 2 && fn <= 5 ? nm : "", c.a[1], c.d[1]);
+    }
     c.c = false;
     int used = 0;
     for (auto& kv : s_bram) used += kv.second.blocks;

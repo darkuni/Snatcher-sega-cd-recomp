@@ -1,3 +1,4 @@
+#include <cstring>
 // Fallback: run guest code the recompiler did not see with Musashi, one instruction at a time,
 // until execution reaches recompiled code or an address a host caller is waiting for.
 // Every address it starts at is logged (misses.txt) so the next recompile can include it.
@@ -79,6 +80,16 @@ void interpret(Cpu& c, uint32_t pc) {
             }
         }
         s_cur = &c;
+        {
+            static const char* tf = getenv("SNATCHER_ITRACE");
+            static uint64_t tfr = tf ? strtoull(tf, nullptr, 10) : ~0ull;
+            static uint64_t tfh = tf && strchr(tf, '-') ? strtoull(strchr(tf, '-') + 1, nullptr, 10) : tfr;
+            if (c.id == CPU_SUB && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
+                fprintf(stderr, "[it] f%llu %06x", (unsigned long long)g.frame, pc);
+            if (c.id == CPU_SUB && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
+                fprintf(stderr, " d0=%08x d1=%08x d7=%08x a0=%06x a7=%06x\n", c.d[0], c.d[1], c.d[7], c.a[0], c.a[7]);
+            if (0) fprintf(stderr, "[it] %06x d0=%08x d1=%08x d7=%08x a0=%06x a7=%06x\n", pc, c.d[0], c.d[1], c.d[7], c.a[0], c.a[7]);
+        }
         load(c, pc);
         int cyc = m68k_execute(1);
         pc = save(c);

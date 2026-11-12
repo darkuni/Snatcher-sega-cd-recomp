@@ -343,6 +343,8 @@ class Emit:
         else:
             return False
         lines.append(f'c.leave(); if (c.ret != 0x{ret:06x}u) return;')
+        # return addresses are resume points: let interrupts in here too (H-ints every 8 lines)
+        lines.append(f'if (c.cycles >= c.limit && !c.sync(0x{ret:06x}u)) return;')
         return True
 
     def insn(self, i):
@@ -464,6 +466,7 @@ class Emit:
                 L.append(f'uint32_t {tv} = {addr};')
                 L.append(f'c.push32(0x{i.end:06x}u); c.enter(0x{i.end:06x}u); c.jump({tv}); c.leave(); '
                          f'if (c.ret != 0x{i.end:06x}u) return;')
+                L.append(f'if (c.cycles >= c.limit && !c.sync(0x{i.end:06x}u)) return;')
             else:
                 self.call(t, i.end, L)
         elif op == 'jmp':

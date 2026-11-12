@@ -89,3 +89,13 @@ sp 0069f4
 sp 006b94
 sp 006e4e
 sp 006f6c
+sc 016f4c
+sc 016f66
+sc 016f70
+sc 016f7c
+sc 016f82
+sc 017018
+sc 01701c
+sc 01702c
+sc 0170aa
+sc 0170b0

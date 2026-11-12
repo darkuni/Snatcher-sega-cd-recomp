@@ -1923,12 +1923,22 @@ static const FuncEntry fe_sc[] = {   // sorted: the runtime binary-searches it
   {0x016f22, sc_016f22},
   {0x016f28, sc_016f28},
   {0x016f46, sc_016f46},
+  {0x016f4c, sc_016f4c},
+  {0x016f66, sc_016f66},
+  {0x016f70, sc_016f70},
+  {0x016f7c, sc_016f7c},
+  {0x016f82, sc_016f82},
   {0x016f94, sc_016f94},
   {0x016fbe, sc_016f94},
   {0x016fda, sc_016f94},
   {0x017016, sc_017016},
+  {0x017018, sc_017018},
+  {0x01701c, sc_01701c},
+  {0x01702c, sc_01702c},
   {0x017090, sc_017090},
   {0x017096, sc_017096},
+  {0x0170aa, sc_0170aa},
+  {0x0170b0, sc_0170b0},
   {0x0170fa, sc_0170fa},
   {0x017100, sc_0170fa},
   {0x01710a, sc_0170fa},
@@ -2131,6 +2141,10 @@ static const FuncEntry fe_y16[] = {   // sorted: the runtime binary-searches it
   {0x0291d4, y16_0290d4},
   {0x0292d0, y16_0290d4},
 };
+static const FuncEntry fe_h00[] = {   // sorted: the runtime binary-searches it
+  {0x02937c, h00_02937c},
+  {0x029422, h00_029422},
+};
 const ImageEntry g_images[] = {
   {"IP.bin", 0, 0xff0000, 0xff6600, {0x43fa000au, 0x4eb80364u, 0x6000057au, 0x600f0000u, 0x00000c22u, 0x0e440e66u, 0x0e880eeeu, 0x0aaa0888u}, fe_ip, sizeof(fe_ip) / sizeof(fe_ip[0])},
   {"SP.bin@1300", 0, 0xffe100, 0xffe3d0, {0x4ef9ffffu, 0xe2904ef9u, 0xffffe140u, 0x4279ffffu, 0x704a41fau, 0x02767000u, 0x1039ffffu, 0x7021c0fcu}, fe_spm, sizeof(fe_spm) / sizeof(fe_spm[0])},
@@ -2140,5 +2154,6 @@ const ImageEntry g_images[] = {
   {"DATA_D1.BIN", 1, 0x028000, 0x04a26c, {0x0002800cu, 0x00028c9au, 0x00029266u, 0x44415441u, 0x5f44315fu, 0x42494e20u, 0x00000070u, 0x88000028u}, fe_d1, sizeof(fe_d1) / sizeof(fe_d1[0])},
   {"DATA_D2.BIN", 1, 0x028000, 0x03b624, {0x0002800cu, 0x00028278u, 0x000285ceu, 0x44415441u, 0x5f44325fu, 0x42494e20u, 0x02000000u, 0x81000000u}, fe_d2, sizeof(fe_d2) / sizeof(fe_d2[0])},
   {"DATA_Y16.BIN", 1, 0x028000, 0x054a0a, {0x0002800cu, 0x00028d0eu, 0x000290d4u, 0x44415441u, 0x5f593136u, 0x5f42494eu, 0x9700012cu, 0x8a000240u}, fe_y16, sizeof(fe_y16) / sizeof(fe_y16[0])},
+  {"DATA_H00.BIN", 1, 0x028000, 0x02e6dc, {0x00028008u, 0x000284acu, 0x44415441u, 0x5f483030u, 0x5f42494eu, 0x000000ffu, 0x81000000u, 0x93000000u}, fe_h00, sizeof(fe_h00) / sizeof(fe_h00[0])},
 };
-const int g_image_count = 8;
+const int g_image_count = 9;
