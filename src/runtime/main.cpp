@@ -81,6 +81,11 @@ static void headless_report() {
         fwrite(g.vdp.vram, 1, 0x10000, v); fwrite(g.vdp.cram, 2, 64, v); fwrite(g.vdp.vsram, 2, 40, v);
         fwrite(g.vdp.reg, 1, 32, v); fclose(v);
     }
+    if (getenv("SNATCHER_MEMDUMP")) {
+        if (FILE* m = fopen("wram.bin", "wb")) { fwrite(g.wram, 1, 0x10000, m); fclose(m); }
+        if (FILE* m = fopen("prg.bin", "wb")) { fwrite(g.prg, 1, 0x80000, m); fclose(m); }
+        if (FILE* m = fopen("word.bin", "wb")) { fwrite(g.word, 1, 0x40000, m); fclose(m); }
+    }
     fflush(stderr);
     _Exit(0);
 }

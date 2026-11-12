@@ -97,8 +97,15 @@ uint16_t MainBus::rd16(uint32_t a) {
     return (rd8(a) << 8) | rd8(a + 1);
 }
 
+static uint32_t mw_lo = 1, mw_hi = 0;
+static void mwatch(uint32_t a, uint32_t v, int sz) {
+    static bool init = false;
+    if (!init) { init = true; if (const char* e = getenv("SNATCHER_MWATCH")) sscanf(e, "%x-%x", &mw_lo, &mw_hi); }
+    if (a + sz > mw_lo && a <= mw_hi)
+        fprintf(stderr, "[mw] f%llu l%d %06x=%0*x pc %06x\n", (unsigned long long)g.frame, g.line, a, sz * 2, v, g.main.dbg_pc);
+}
 void MainBus::wr8(uint32_t a, uint8_t v) {
-    if (a >= 0xff0000) { g.wram[a & 0xffff] = v; return; }
+    if (a >= 0xff0000) { mwatch(a, v, 1); g.wram[a & 0xffff] = v; return; }
     if (a >= 0x200000 && a < 0x240000) { g.word[a & 0x3ffff] = v; return; }
     if (a >= 0x020000 && a < 0x040000) { g.prg[(g.prg_bank << 17) | (a & 0x1ffff)] = v; return; }
     if (a >= 0xa12000 && a < 0xa12040) { main_ga_wr8(a, v); return; }
@@ -111,7 +118,7 @@ void MainBus::wr8(uint32_t a, uint8_t v) {
 }
 
 void MainBus::wr16(uint32_t a, uint16_t v) {
-    if (a >= 0xff0000) { wbe16(&g.wram[a & 0xffff], v); return; }
+    if (a >= 0xff0000) { mwatch(a, v, 2); wbe16(&g.wram[a & 0xffff], v); return; }
     if (a >= 0x200000 && a < 0x240000) { wbe16(&g.word[a & 0x3ffff], v); return; }
     if (a >= 0xc00000 && a < 0xc00020) {
         if ((a & 0x1c) == 0x00) g.vdp.data_write(v);
@@ -200,7 +207,7 @@ static void swatch(uint32_t a, uint32_t v, int sz) {
 }
 void SubBus::wr8(uint32_t a, uint8_t v) {
     if (a < 0x80000) { swatch(a, v, 1); g.prg[a] = v; return; }
-    if (a < 0xc0000) { g.word[a & 0x3ffff] = v; return; }
+    if (a < 0xc0000) { swatch(a, v, 1); g.word[a & 0x3ffff] = v; return; }
     if (a >= 0xfe0000 && a < 0xff0000) { if (a & 1) g.bram[(a >> 1) & 0x1fff] = v; return; }
     if (a >= 0xff0000 && a < 0xff8000) { if (a & 1) pcm_write(a, v); return; }
     if (a >= 0xff8000) { sub_ga_wr8(a, v); return; }
@@ -208,7 +215,7 @@ void SubBus::wr8(uint32_t a, uint8_t v) {
 
 void SubBus::wr16(uint32_t a, uint16_t v) {
     if (a < 0x80000) { swatch(a, v, 2); wbe16(&g.prg[a], v); return; }
-    if (a < 0xc0000) { wbe16(&g.word[a & 0x3ffff], v); return; }
+    if (a < 0xc0000) { swatch(a, v, 2); wbe16(&g.word[a & 0x3ffff], v); return; }
     if (a >= 0xff8000) {
         uint32_t r = a & 0x1ff;
         if (r == 0x002) { sub_ga_wr8(a + 1, (uint8_t)v); return; }

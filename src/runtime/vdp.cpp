@@ -31,6 +31,7 @@ void Vdp::ctrl_write(uint16_t v) {
     if (!pending) {
         if ((v & 0xc000) == 0x8000) {               // register write
             int r = (v >> 8) & 0x1f;
+            if (r == 1 && getenv("SNATCHER_R1LOG") && ((reg[1] ^ v) & 0x40)) fprintf(stderr, "[r1] f%llu %02x\n", (unsigned long long)g.frame, v & 0xff);
             if (r < 24) reg[r] = (uint8_t)v;
             code &= 0x3c;                           // writing a register clears CD1-0 (as hardware)
             return;

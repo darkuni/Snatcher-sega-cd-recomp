@@ -84,9 +84,10 @@ void interpret(Cpu& c, uint32_t pc) {
             static const char* tf = getenv("SNATCHER_ITRACE");
             static uint64_t tfr = tf ? strtoull(tf, nullptr, 10) : ~0ull;
             static uint64_t tfh = tf && strchr(tf, '-') ? strtoull(strchr(tf, '-') + 1, nullptr, 10) : tfr;
-            if (c.id == CPU_SUB && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
+            static int tcpu = getenv("SNATCHER_ITRACE_MAIN") ? CPU_MAIN : CPU_SUB;
+            if (c.id == tcpu && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
                 fprintf(stderr, "[it] f%llu %06x", (unsigned long long)g.frame, pc);
-            if (c.id == CPU_SUB && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
+            if (c.id == tcpu && g.frame >= tfr && g.frame <= tfh && pc != 0x10f74 && pc != 0x10f7a)
                 fprintf(stderr, " d0=%08x d1=%08x d7=%08x a0=%06x a7=%06x\n", c.d[0], c.d[1], c.d[7], c.a[0], c.a[7]);
             if (0) fprintf(stderr, "[it] %06x d0=%08x d1=%08x d7=%08x a0=%06x a7=%06x\n", pc, c.d[0], c.d[1], c.d[7], c.a[0], c.a[7]);
         }

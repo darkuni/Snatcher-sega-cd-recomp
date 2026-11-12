@@ -93,11 +93,8 @@ static void hw_line() {         // called with s_mtx held, once both CPUs finish
         // H-int counter: counts down each active line, fires and reloads from reg 10 when it underflows
         if (--g.hcount < 0) {
             g.hcount = g.vdp.reg[10];
-            if (g.vdp.hint_enabled()) {
-                if (g.hint_pending && getenv("SNATCHER_HINTLOG") && g.frame == (uint64_t)atoi(getenv("SNATCHER_HINTLOG")))
-                    fprintf(stderr, "hint LOST at line %d (main imask %d)\n", g.line, g.main.imask);
-                g.hint_pending = true;
-            }
+            // the VDP latches the H-int even while IE1 is off; it is raised as soon as IE1 is set
+            g.hint_pending = true;
         }
     } else {
         g.hcount = g.vdp.reg[10];              // reloaded every line during V-blank
@@ -201,7 +198,7 @@ static bool take_interrupt(Cpu& c, uint32_t resume) {
             g.n_vint++;
             return deliver(c, 6, g.main_vint, resume, false);
         }
-        if (g.hint_pending && c.imask < 4) {
+        if (g.hint_pending && g.vdp.hint_enabled() && c.imask < 4) {
             g.hint_pending = false;
             if (getenv("SNATCHER_HINTLOG") && g.frame == (uint64_t)atoi(getenv("SNATCHER_HINTLOG")))
                 fprintf(stderr, "hint taken line %d (vec %04x, $e034=%04x $e064=%04x imask %d)\n", g.line, g.hint_vec,
