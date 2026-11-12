@@ -114,8 +114,8 @@ jobs:
           path: snatcher-linux-x86_64.tar.gz
 
   release:
-    # tag push (v*): publish the Windows and Linux packages as a GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # publishes the Windows and Linux packages as release v<VERSION> when that release doesn't exist yet
+    if: github.ref == 'refs/heads/main'
     needs: [windows, linux]
     runs-on: ubuntu-24.04
     permissions:
@@ -133,8 +133,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          TAG="v$(tr -d ' \n' < VERSION)"
+          if gh release view "$TAG" > /dev/null 2>&1; then echo "release $TAG exists"; exit 0; fi
+          GITHUB_REF_NAME="$TAG"
           (cd pkg/snatcher-win64 && zip -qr ../../snatcher-${GITHUB_REF_NAME}-win64.zip .)
           cp pkg/snatcher-linux-x86_64/snatcher-linux-x86_64.tar.gz snatcher-${GITHUB_REF_NAME}-linux-x86_64.tar.gz
           gh release create "$GITHUB_REF_NAME" --title "Snatcher recomp $GITHUB_REF_NAME" \
-            --notes-file .github/release-notes.md --prerelease \
+            --notes-file .github/release-notes.md --prerelease --target "$GITHUB_SHA" \
             snatcher-${GITHUB_REF_NAME}-win64.zip snatcher-${GITHUB_REF_NAME}-linux-x86_64.tar.gz
